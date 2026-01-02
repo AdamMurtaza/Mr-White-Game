@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1F2937">
+    <title>Mr. White - Find the Imposter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60A5FA, #A78BFA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9CA3AF;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #D1D5DB;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #60A5FA;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+
+        .word-reveal {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .player-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #60A5FA;
+            margin-bottom: 20px;
+        }
+
+        .word-display {
+            font-size: 42px;
+            font-weight: bold;
+            padding: 30px;
+            background: rgba(96, 165, 250, 0.2);
+            border-radius: 16px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word-hidden {
+            filter: blur(15px);
+            user-select: none;
+        }
+
+        .imposter-tag {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 72px;
+            font-weight: bold;
+            color: #60A5FA;
+            margin: 40px 0;
+        }
+
+        .timer.warning {
+            color: #F59E0B;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: #EF4444;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .player-card:hover {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: #60A5FA;
+            transform: translateY(-3px);
+        }
+
+        .player-card.selected {
+            background: rgba(96, 165, 250, 0.3);
+            border-color: #60A5FA;
+        }
+
+        .player-card.voted {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .player-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .vote-count {
+            font-size: 24px;
+            color: #60A5FA;
+            font-weight: bold;
+        }
+
+        .results {
+            text-align: center;
+        }
+
+        .result-message {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .revealed-player {
+            background: rgba(239, 68, 68, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #9CA3AF;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="screen active">
+            <div class="card">
+                <h1>🎭 Mr. White</h1>
+                <p class="subtitle">Find the imposter among you!</p>
+
+                <label for="playerCount">Number of Players</label>
+                <select id="playerCount">
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                    <option value="5" selected>5 Players</option>
+                    <option value="6">6 Players</option>
+                    <option value="7">7 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="9">9 Players</option>
+                    <option value="10">10 Players</option>
+                </select>
+
+                <label for="timerDuration">Discussion Time (seconds)</label>
+                <select id="timerDuration">
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="90">1.5 minutes</option>
+                    <option value="120" selected>2 minutes</option>
+                    <option value="180">3 minutes</option>
+                    <option value="300">5 minutes</option>
+                </select>
+
+                <button class="btn" onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Word Reveal Screen -->
+        <div id="revealScreen" class="screen">
+            <div class="card">
+                <div class="word-reveal">
+                    <div class="player-number">Player <span id="currentPlayer">1</span></div>
+                    
+                    <div id="wordDisplay" class="word-display word-hidden">
+                        <span id="wordText">BANANA</span>
+                    </div>
+
+                    <button class="btn" id="revealBtn" onclick="revealWord()">Tap to See Your Word</button>
+                    <button class="btn btn-secondary" id="nextBtn" onclick="nextPlayer()" style="display: none;">Next Player</button>
+                    
+                    <div class="progress-text">
+                        <span id="progressText">Player 1 of 5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Screen -->
+        <div id="timerScreen" class="screen">
+            <div class="card">
+                <h1>⏱️ Discussion Time</h1>
+                <p class="subtitle">Discuss and find Mr. White!</p>
+                
+                <div class="timer" id="timer">2:00</div>
+                
+                <button class="btn btn-secondary" onclick="skipToVoting()">Skip to Voting</button>
+            </div>
+        </div>
+
+        <!-- Voting Screen -->
+        <div id="votingScreen" class="screen">
+            <div class="card">
+                <h1>🗳️ Vote for the Imposter</h1>
+                <p class="subtitle">Who do you think is Mr. White?</p>
+                
+                <div class="player-grid" id="votingGrid"></div>
+                
+                <button class="btn" id="submitVoteBtn" onclick="submitVote()" style="margin-top: 20px; display: none;">Submit Vote</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="card">
+                <div class="results">
+                    <h1>🎉 Game Over!</h1>
+                    
+                    <div class="result-message" id="resultMessage"></div>
+                    
+                    <div class="revealed-player">
+                        <div style="font-size: 18px; margin-bottom: 10px; color: #9CA3AF;">Mr. White was:</div>
+                        <div style="font-size: 32px; font-weight: bold;" id="imposterReveal">Player 3</div>
+                        <div style="margin-top: 10px; font-size: 20px; color: #60A5FA;" id="imposterWord">Word: APPLE</div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 18px; margin-bottom: 10px; color: #9CA3AF;">Everyone else had:</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #34D399;" id="normalWord">BANANA</div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 16px; color: #9CA3AF; margin-bottom: 15px;">Final Votes:</div>
+                        <div id="voteResults"></div>
+                    </div>
+
+                    <button class="btn" onclick="playAgain()" style="margin-top: 30px;">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game database - 100+ word pairs for maximum variety
+        const wordDatabase = [
+            // Food & Drinks
+            { normal: "APPLE", imposter: "ORANGE" },
+            { normal: "COFFEE", imposter: "TEA" },
+            { normal: "PIZZA", imposter: "BURGER" },
+            { normal: "CHOCOLATE", imposter: "VANILLA" },
+            { normal: "BREAD", imposter: "RICE" },
+            { normal: "CHICKEN", imposter: "BEEF" },
+            { normal: "JUICE", imposter: "SODA" },
+            { normal: "CAKE", imposter: "PIE" },
+            { normal: "PASTA", imposter: "NOODLES" },
+            { normal: "MILK", imposter: "YOGURT" },
+            { normal: "COOKIE", imposter: "BISCUIT" },
+            { normal: "SANDWICH", imposter: "WRAP" },
+            { normal: "SOUP", imposter: "STEW" },
+            { normal: "STEAK", imposter: "CHOP" },
+            { normal: "SALAD", imposter: "COLESLAW" },
+            
+            // Animals
+            { normal: "DOG", imposter: "CAT" },
+            { normal: "LION", imposter: "TIGER" },
+            { normal: "ELEPHANT", imposter: "RHINO" },
+            { normal: "EAGLE", imposter: "HAWK" },
+            { normal: "SHARK", imposter: "WHALE" },
+            { normal: "SNAKE", imposter: "LIZARD" },
+            { normal: "HORSE", imposter: "ZEBRA" },
+            { normal: "WOLF", imposter: "FOX" },
+            { normal: "BEAR", imposter: "PANDA" },
+            { normal: "RABBIT", imposter: "HARE" },
+            { normal: "PENGUIN", imposter: "PUFFIN" },
+            { normal: "DOLPHIN", imposter: "SEAL" },
+            { normal: "BUTTERFLY", imposter: "MOTH" },
+            { normal: "CROW", imposter: "RAVEN" },
+            { normal: "FROG", imposter: "TOAD" },
+            
+            // Nature & Weather
+            { normal: "SUMMER", imposter: "WINTER" },
+            { normal: "MOUNTAIN", imposter: "OCEAN" },
+            { normal: "RAIN", imposter: "SNOW" },
+            { normal: "SUNRISE", imposter: "SUNSET" },
+            { normal: "STAR", imposter: "PLANET" },
+            { normal: "RIVER", imposter: "LAKE" },
+            { normal: "FOREST", imposter: "JUNGLE" },
+            { normal: "DESERT", imposter: "TUNDRA" },
+            { normal: "CLOUD", imposter: "FOG" },
+            { normal: "WIND", imposter: "BREEZE" },
+            { normal: "THUNDER", imposter: "LIGHTNING" },
+            { normal: "ISLAND", imposter: "PENINSULA" },
+            { normal: "VALLEY", imposter: "CANYON" },
+            { normal: "VOLCANO", imposter: "GEYSER" },
+            
+            // Transportation
+            { normal: "CAR", imposter: "MOTORCYCLE" },
+            { normal: "AIRPLANE", imposter: "HELICOPTER" },
+            { normal: "TRAIN", imposter: "SUBWAY" },
+            { normal: "BOAT", imposter: "SHIP" },
+            { normal: "BICYCLE", imposter: "SCOOTER" },
+            { normal: "BUS", imposter: "VAN" },
+            { normal: "TRUCK", imposter: "PICKUP" },
+            { normal: "JET", imposter: "ROCKET" },
+            { normal: "YACHT", imposter: "SAILBOAT" },
+            { normal: "TAXI", imposter: "UBER" },
+            
+            // Sports & Games
+            { normal: "BASKETBALL", imposter: "FOOTBALL" },
+            { normal: "TENNIS", imposter: "BADMINTON" },
+            { normal: "SOCCER", imposter: "HOCKEY" },
+            { normal: "CHESS", imposter: "CHECKERS" },
+            { normal: "GOLF", imposter: "CRICKET" },
+            { normal: "BOXING", imposter: "WRESTLING" },
+            { normal: "RUNNING", imposter: "JOGGING" },
+            { normal: "SWIMMING", imposter: "DIVING" },
+            { normal: "SKIING", imposter: "SNOWBOARDING" },
+            { normal: "SURFING", imposter: "KAYAKING" },
+            
+            // Music & Instruments
+            { normal: "GUITAR", imposter: "BASS" },
+            { normal: "PIANO", imposter: "KEYBOARD" },
+            { normal: "DRUM", imposter: "BONGO" },
+            { normal: "VIOLIN", imposter: "CELLO" },
+            { normal: "FLUTE", imposter: "CLARINET" },
+            { normal: "TRUMPET", imposter: "SAXOPHONE" },
+            { normal: "ROCK", imposter: "METAL" },
+            { normal: "JAZZ", imposter: "BLUES" },
+            { normal: "POP", imposter: "RAP" },
+            
+            // Technology
+            { normal: "PHONE", imposter: "TABLET" },
+            { normal: "LAPTOP", imposter: "DESKTOP" },
+            { normal: "MOUSE", imposter: "TRACKPAD" },
+            { normal: "MONITOR", imposter: "SCREEN" },
+            { normal: "KEYBOARD", imposter: "TYPEWRITER" },
+            { normal: "CAMERA", imposter: "CAMCORDER" },
+            { normal: "SPEAKER", imposter: "HEADPHONES" },
+            { normal: "ROUTER", imposter: "MODEM" },
+            { normal: "CHARGER", imposter: "BATTERY" },
+            { normal: "USB", imposter: "HDMI" },
+            
+            // Clothing
+            { normal: "SHIRT", imposter: "BLOUSE" },
+            { normal: "PANTS", imposter: "JEANS" },
+            { normal: "JACKET", imposter: "COAT" },
+            { normal: "SHOES", imposter: "BOOTS" },
+            { normal: "HAT", imposter: "CAP" },
+            { normal: "DRESS", imposter: "SKIRT" },
+            { normal: "SWEATER", imposter: "HOODIE" },
+            { normal: "SOCKS", imposter: "STOCKINGS" },
+            { normal: "GLOVES", imposter: "MITTENS" },
+            { normal: "SCARF", imposter: "SHAWL" },
+            
+            // Professions
+            { normal: "DOCTOR", imposter: "NURSE" },
+            { normal: "TEACHER", imposter: "PROFESSOR" },
+            { normal: "CHEF", imposter: "COOK" },
+            { normal: "PILOT", imposter: "CAPTAIN" },
+            { normal: "LAWYER", imposter: "JUDGE" },
+            { normal: "ARTIST", imposter: "PAINTER" },
+            { normal: "ENGINEER", imposter: "ARCHITECT" },
+            { normal: "WRITER", imposter: "AUTHOR" },
+            { normal: "ACTOR", imposter: "ACTRESS" },
+            { normal: "SINGER", imposter: "VOCALIST" },
+            
+            // Objects & Items
+            { normal: "BOOK", imposter: "MAGAZINE" },
+            { normal: "PEN", imposter: "PENCIL" },
+            { normal: "CHAIR", imposter: "STOOL" },
+            { normal: "TABLE", imposter: "DESK" },
+            { normal: "CUP", imposter: "MUG" },
+            { normal: "PLATE", imposter: "BOWL" },
+            { normal: "KNIFE", imposter: "SWORD" },
+            { normal: "LAMP", imposter: "CANDLE" },
+            { normal: "PILLOW", imposter: "CUSHION" },
+            { normal: "BLANKET", imposter: "QUILT" },
+            { normal: "MIRROR", imposter: "WINDOW" },
+            { normal: "CLOCK", imposter: "WATCH" },
+            { normal: "WALLET", imposter: "PURSE" },
+            { normal: "BACKPACK", imposter: "SUITCASE" },
+            { normal: "UMBRELLA", imposter: "PARASOL" },
+            
+            // Royalty & Mythology
+            { normal: "KING", imposter: "EMPEROR" },
+            { normal: "QUEEN", imposter: "PRINCESS" },
+            { normal: "KNIGHT", imposter: "WARRIOR" },
+            { normal: "WIZARD", imposter: "SORCERER" },
+            { normal: "DRAGON", imposter: "WYVERN" },
+            { normal: "FAIRY", imposter: "PIXIE" },
+            { normal: "VAMPIRE", imposter: "WEREWOLF" },
+            { normal: "GHOST", imposter: "SPIRIT" },
+            { normal: "ANGEL", imposter: "DEMON" },
+            { normal: "GIANT", imposter: "TITAN" }
+        ];
+
+        let gameState = {
+            playerCount: 5,
+            timerDuration: 120,
+            currentPlayerIndex: 0,
+            imposterIndex: 0,
+            wordPair: null,
+            playerWords: [],
+            votes: [],
+            timerInterval: null,
+            selectedVote: null,
+            hasVoted: false
+        };
+
+        function startGame() {
+            // Get settings
+            gameState.playerCount = parseInt(document.getElementById('playerCount').value);
+            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
+            
+            // Select random word pair
+            gameState.wordPair = wordDatabase[Math.floor(Math.random() * wordDatabase.length)];
+            
+            // Randomly select imposter
+            gameState.imposterIndex = Math.floor(Math.random() * gameState.playerCount);
+            
+            // Assign words to players
+            gameState.playerWords = [];
+            for (let i = 0; i < gameState.playerCount; i++) {
+                gameState.playerWords.push({
+                    word: i === gameState.imposterIndex ? gameState.wordPair.imposter : gameState.wordPair.normal,
+                    isImposter: i === gameState.imposterIndex
+                });
+            }
+            
+            // Initialize votes
+            gameState.votes = Array(gameState.playerCount).fill(0);
+            gameState.currentPlayerIndex = 0;
+            gameState.hasVoted = false;
+            gameState.selectedVote = null;
+            
+            // Show reveal screen
+            showScreen('revealScreen');
+            updateRevealScreen();
+        }
+
+        function updateRevealScreen() {
+            document.getElementById('currentPlayer').textContent = gameState.currentPlayerIndex + 1;
+            document.getElementById('progressText').textContent = 
+                `Player ${gameState.currentPlayerIndex + 1} of ${gameState.playerCount}`;
+            
+            const wordText = gameState.playerWords[gameState.currentPlayerIndex].word;
+            document.getElementById('wordText').textContent = wordText;
+            document.getElementById('wordDisplay').classList.add('word-hidden');
+            document.getElementById('revealBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function revealWord() {
+            document.getElementById('wordDisplay').classList.remove('word-hidden');
+            document.getElementById('revealBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function nextPlayer() {
+            gameState.currentPlayerIndex++;
+            
+            if (gameState.currentPlayerIndex >= gameState.playerCount) {
+                // All players have seen their words, start timer
+                startTimer();
+            } else {
+                updateRevealScreen();
+            }
+        }
+
+        function startTimer() {
+            showScreen('timerScreen');
+            let timeLeft = gameState.timerDuration;
+            
+            updateTimerDisplay(timeLeft);
+            
+            gameState.timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    showVoting();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
+            
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = display;
+            
+            // Change color based on time
+            timerEl.classList.remove('warning', 'danger');
+            if (seconds <= 10) {
+                timerEl.classList.add('danger');
+            } else if (seconds <= 30) {
+                timerEl.classList.add('warning');
+            }
+        }
+
+        function skipToVoting() {
+            clearInterval(gameState.timerInterval);
+            showVoting();
+        }
+
+        function showVoting() {
+            showScreen('votingScreen');
+            
+            const votingGrid = document.getElementById('votingGrid');
+            votingGrid.innerHTML = '';
+            
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.innerHTML = `
+                    <div class="player-name">Player ${i + 1}</div>
+                    <div class="vote-count">0</div>
+                `;
+                playerCard.onclick = () => selectPlayer(i, playerCard);
+                votingGrid.appendChild(playerCard);
+            }
+        }
+
+        function selectPlayer(index, cardElement) {
+            if (gameState.hasVoted) return;
+            
+            // Remove previous selection
+            document.querySelectorAll('.player-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select new player
+            cardElement.classList.add('selected');
+            gameState.selectedVote = index;
+            document.getElementById('submitVoteBtn').style.display = 'block';
+        }
+
+        function submitVote() {
+            if (gameState.selectedVote === null || gameState.hasVoted) return;
+            
+            gameState.votes[gameState.selectedVote]++;
+            gameState.hasVoted = true;
+            
+            // Update display
+            const cards = document.querySelectorAll('.player-card');
+            cards.forEach((card, index) => {
+                card.classList.add('voted');
+                const voteCount = card.querySelector('.vote-count');
+                voteCount.textContent = gameState.votes[index];
+            });
+            
+            document.getElementById('submitVoteBtn').textContent = 'Vote Submitted!';
+            document.getElementById('submitVoteBtn').disabled = true;
+            
+            // Show results after 2 seconds
+            setTimeout(showResults, 2000);
+        }
+
+        function showResults() {
+            showScreen('resultsScreen');
+            
+            // Find player with most votes
+            const maxVotes = Math.max(...gameState.votes);
+            const votedOutIndex = gameState.votes.indexOf(maxVotes);
+            
+            // Check if imposter was caught
+            const caught = votedOutIndex === gameState.imposterIndex;
+            
+            const resultMessage = document.getElementById('resultMessage');
+            if (caught) {
+                resultMessage.textContent = '✅ Mr. White was caught!';
+                resultMessage.style.color = '#34D399';
+            } else {
+                resultMessage.textContent = '❌ Mr. White escaped!';
+                resultMessage.style.color = '#EF4444';
+            }
+            
+            document.getElementById('imposterReveal').textContent = `Player ${gameState.imposterIndex + 1}`;
+            document.getElementById('imposterWord').textContent = `Word: ${gameState.wordPair.imposter}`;
+            document.getElementById('normalWord').textContent = gameState.wordPair.normal;
+            
+            // Show vote results
+            const voteResults = document.getElementById('voteResults');
+            voteResults.innerHTML = gameState.votes.map((votes, index) => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span>Player ${index + 1} ${index === gameState.imposterIndex ? '(Mr. White)' : ''}</span>
+                    <span style="color: #60A5FA; font-weight: bold;">${votes} ${votes === 1 ? 'vote' : 'votes'}</span>
+                </div>
+            `).join('');
+        }
+
+        function playAgain() {
+            showScreen('setupScreen');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
