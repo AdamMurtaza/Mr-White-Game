@@ -157,7 +157,7 @@ HTML('''
             text-align: center;
             font-size: 72px;
             font-weight: bold;
-            color: #A8E063; /* Updated: Green */
+            color: #2D3748; /* Updated to a darker color for visibility */
             margin: 40px 0;
         }
 
@@ -397,7 +397,8 @@ HTML('''
 
                     <div style="display: flex; gap: 10px; margin-top: 30px;">
                         <button class="btn" onclick="playAgainSamePlayers()">Play Again (Same Players)</button>
-                        <button class="btn btn-secondary" onclick="playAgainFullReset()">New Game (Reset Players)</button>
+                        <button class="btn btn-secondary" onclick="playAgainFullReset()">New Game (Reset Players)
+                        </button>
                     </div>
                 </div>
             </div>
@@ -410,10 +411,40 @@ HTML('''
                 <p class="subtitle">The votes are split. Discuss again to find Mr. White!</p>
                 <button class="btn" onclick="discussAgainFromTieScreen()">Start New Discussion</button>
             </div>
-        </div>
+        }
     </div>
 
+    <!-- Audio Elements -->
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/button-1.mp3" preload="auto"></audio>
+    <audio id="revealWordSound" src="https://www.soundjay.com/buttons/button-2.mp3" preload="auto"></audio>
+    <audio id="nextPlayerSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
+    <audio id="timerTickSound" src="https://www.soundjay.com/misc/ticking-clock-3.mp3" preload="auto"></audio>
+    <audio id="suspenseSound" src="https://www.soundjay.com/misc/suspense-sound.mp3" preload="auto"></audio>
+    <audio id="imposterCaughtSound" src="https://www.soundjay.com/applause/applause-2.mp3" preload="auto"></audio>
+    <audio id="imposterEscapedSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
+
     <script>
+        function playSound(soundId, loop = false, volume = 1.0) {
+            const audio = document.getElementById(soundId);
+            if (audio) {
+                audio.loop = loop;
+                audio.volume = volume;
+                audio.play().catch(e => console.error("Error playing sound:", e));
+            }
+        }
+
+        function stopSound(soundId) {
+            const audio = document.getElementById(soundId);
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0; // Reset to start
+            }
+        }
+
+        function playClickSound() {
+            playSound('clickSound', false, 0.3); // Play click sound, no loop, reduced volume
+        }
+
         // Game database - 100+ word pairs for maximum variety
         const wordDatabase = [
             // Food & Drinks
@@ -449,6 +480,11 @@ HTML('''
             { normal: "BUTTERFLY", imposter: "MOTH" },
             { normal: "CROW", imposter: "RAVEN" },
             { normal: "FROG", imposter: "TOAD" },
+            { normal: "GIRAFFE", imposter: "CAMEL" },
+            { normal: "KOALA", imposter: "SLOTH" },
+            { normal: "KANGAROO", imposter: "WALLABY" },
+            { normal: "OCTOPUS", imposter: "SQUID" },
+            { normal: "PARROT", imposter: "MACAW" },
 
             // Nature & Weather
             { normal: "SUMMER", imposter: "WINTER" },
@@ -465,6 +501,11 @@ HTML('''
             { normal: "ISLAND", imposter: "PENINSULA" },
             { normal: "VALLEY", imposter: "CANYON" },
             { normal: "VOLCANO", imposter: "GEYSER" },
+            { normal: "AURORA", imposter: "RAINBOW" },
+            { normal: "GLACIER", imposter: "ICEBERG" },
+            { normal: "OASIS", imposter: "MIRAGE" },
+            { normal: "WATERFALL", imposter: "RAPIDS" },
+            { normal: "CAVE", imposter: "GROTTO" },
 
             // Transportation
             { normal: "CAR", imposter: "MOTORCYCLE" },
@@ -477,6 +518,11 @@ HTML('''
             { normal: "JET", imposter: "ROCKET" },
             { normal: "YACHT", imposter: "SAILBOAT" },
             { normal: "TAXI", imposter: "UBER" },
+            { normal: "HOT AIR BALLOON", imposter: "ZEPPELIN" },
+            { normal: "CANOE", imposter: "ROWBOAT" },
+            { normal: "CRUISE SHIP", imposter: "FERRY" },
+            { normal: "CABLE CAR", imposter: "GONDOLA" },
+            { normal: "RICKSHAW", imposter: "PEDICAB" },
 
             // Sports & Games
             { normal: "BASKETBALL", imposter: "FOOTBALL" },
@@ -489,6 +535,11 @@ HTML('''
             { normal: "SWIMMING", imposter: "DIVING" },
             { normal: "SKIING", imposter: "SNOWBOARDING" },
             { normal: "SURFING", imposter: "KAYAKING" },
+            { normal: "POKER", imposter: "BLACKJACK" },
+            { normal: "RUGBY", imposter: "AMERICAN FOOTBALL" },
+            { normal: "ARCHERY", imposter: "DARTS" },
+            { normal: "FENCING", imposter: "KENDO" },
+            { normal: "MARATHON", imposter: "TRIATHLON" },
 
             // Music & Instruments
             { normal: "GUITAR", imposter: "BASS" },
@@ -500,6 +551,11 @@ HTML('''
             { normal: "ROCK", imposter: "METAL" },
             { normal: "JAZZ", imposter: "BLUES" },
             { normal: "POP", imposter: "RAP" },
+            { normal: "OPERA", imposter: "BROADWAY" },
+            { normal: "HARP", imposter: "LYRE" },
+            { normal: "SYNTHESIZER", imposter: "ORGAN" },
+            { normal: "CONDUCTOR", imposter: "COMPOSER" },
+            { normal: "ALBUM", imposter: "PLAYLIST" },
 
             // Technology
             { normal: "PHONE", imposter: "TABLET" },
@@ -512,6 +568,11 @@ HTML('''
             { normal: "ROUTER", imposter: "MODEM" },
             { normal: "CHARGER", imposter: "BATTERY" },
             { normal: "USB", imposter: "HDMI" },
+            { normal: "SOFTWARE", imposter: "FIRMWARE" },
+            { normal: "MICROPHONE", imposter: "VOICEOVER" },
+            { normal: "PRINTER", imposter: "SCANNER" },
+            { normal: "DATABASE", imposter: "SPREADSHEET" },
+            { normal: "ALGORITHM", imposter: "HEURISTIC" },
 
             // Clothing
             { normal: "SHIRT", imposter: "BLOUSE" },
@@ -524,6 +585,11 @@ HTML('''
             { normal: "SOCKS", imposter: "STOCKINGS" },
             { normal: "GLOVES", imposter: "MITTENS" },
             { normal: "SCARF", imposter: "SHAWL" },
+            { normal: "TIE", imposter: "BOW TIE" },
+            { normal: "VEST", imposter: "WAISTCOAT" },
+            { normal: "OVERALLS", imposter: "DUNGAREES" },
+            { normal: "PAJAMAS", imposter: "NIGHTGOWN" },
+            { normal: "RAINCOAT", imposter: "PONCHO" },
 
             // Professions
             { normal: "DOCTOR", imposter: "NURSE" },
@@ -536,6 +602,11 @@ HTML('''
             { normal: "WRITER", imposter: "AUTHOR" },
             { normal: "ACTOR", imposter: "ACTRESS" },
             { normal: "SINGER", imposter: "VOCALIST" },
+            { normal: "ELECTRICIAN", imposter: "PLUMBER" },
+            { normal: "SCIENTIST", imposter: "RESEARCHER" },
+            { normal: "JOURNALIST", imposter: "REPORTER" },
+            { normal: "VETERINARIAN", imposter: "ZOOLOGIST" },
+            { normal: "DENTIST", imposter: "ORTHODONTIST" },
 
             // Objects & Items
             { normal: "BOOK", imposter: "MAGAZINE" },
@@ -553,6 +624,11 @@ HTML('''
             { normal: "WALLET", imposter: "PURSE" },
             { normal: "BACKPACK", imposter: "SUITCASE" },
             { normal: "UMBRELLA", imposter: "PARASOL" },
+            { normal: "FORK", imposter: "SPOON" },
+            { normal: "SCISSORS", imposter: "SHEARS" },
+            { normal: "HAMMER", imposter: "MALLET" },
+            { normal: "BRUSH", imposter: "COMB" },
+            { normal: "KEY", imposter: "LOCK" },
 
             // Royalty & Mythology
             { normal: "KING", imposter: "EMPEROR" },
@@ -564,7 +640,26 @@ HTML('''
             { normal: "VAMPIRE", imposter: "WEREWOLF" },
             { normal: "GHOST", imposter: "SPIRIT" },
             { normal: "ANGEL", imposter: "DEMON" },
-            { normal: "GIANT", imposter: "TITAN" }
+            { normal: "GIANT", imposter: "TITAN" },
+            { normal: "MERMAID", imposter: "SIREN" },
+            { normal: "CENTAUR", imposter: "SATYR" },
+            { normal: "UNICORN", imposter: "PEGASUS" },
+            { normal: "PHOENIX", imposter: "GRIFFIN" },
+            { normal: "MINOTAUR", imposter: "HARPY" },
+
+            // Everyday Items
+            { normal: "COUCH", imposter: "SOFA" },
+            { normal: "CARPET", imposter: "RUG" },
+            { normal: "VASE", imposter: "POT" },
+            { normal: "TOWEL", imposter: "CLOTH" },
+            { normal: "WINDOW", imposter: "PANE" },
+
+            // Abstract Concepts
+            { normal: "HAPPINESS", imposter: "JOY" },
+            { normal: "BRAVERY", imposter: "COURAGE" },
+            { normal: "WISDOM", imposter: "KNOWLEDGE" },
+            { normal: "FREEDOM", imposter: "LIBERTY" },
+            { normal: "PEACE", imposter: "CALM" }
         ];
 
         let gameState = {
@@ -580,10 +675,12 @@ HTML('''
             individualPlayerVotes: [],
             tallyVotes: [],
             playerNames: [], // Added: to store individual player names
-            playerScores: [] // Added: to track imposterCount and imposterWins for each player
+            playerScores: [], // Added: to track imposterCount and imposterWins for each player
+            playerRevealOrder: [] // Added: to store the shuffled order of players for word reveal
         };
 
         function showPlayerNamingScreen() {
+            playClickSound();
             gameState.playerCount = parseInt(document.getElementById('playerCount').value);
             gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
             showScreen('playerNamingScreen');
@@ -605,12 +702,20 @@ HTML('''
         }
 
         function proceedToGame() {
+            playClickSound();
             gameState.playerNames = [];
             for (let i = 0; i < gameState.playerCount; i++) {
                 const inputElement = document.getElementById(`player${i + 1}Name`);
                 gameState.playerNames.push(inputElement.value.trim() || `Player ${i + 1}`);
             }
             startGame();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
         }
 
         function startGame() {
@@ -629,8 +734,12 @@ HTML('''
                 });
             }
 
+            // Generate and shuffle player reveal order
+            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
+            shuffleArray(gameState.playerRevealOrder);
+
             // Initialize voting state
-            gameState.currentPlayerIndex = 0;
+            gameState.currentPlayerIndex = 0; // This now refers to the index in playerRevealOrder
             gameState.selectedVote = null;
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
@@ -646,12 +755,13 @@ HTML('''
         }
 
         function updateRevealScreen() {
-            // 1. Update currentPlayerName to display the custom player name
-            document.getElementById('currentPlayerName').textContent = gameState.playerNames[gameState.currentPlayerIndex];
+            const actualPlayerIndex = gameState.playerRevealOrder[gameState.currentPlayerIndex];
+            // 1. Update currentPlayerName to display the custom player name based on shuffled order
+            document.getElementById('currentPlayerName').textContent = gameState.playerNames[actualPlayerIndex];
             document.getElementById('progressText').textContent =
                 `Player ${gameState.currentPlayerIndex + 1} of ${gameState.playerCount}`;
 
-            const wordText = gameState.playerWords[gameState.currentPlayerIndex].word;
+            const wordText = gameState.playerWords[actualPlayerIndex].word;
             document.getElementById('wordText').textContent = wordText;
             document.getElementById('wordDisplay').classList.add('word-hidden');
             document.getElementById('revealBtn').style.display = 'block';
@@ -659,12 +769,14 @@ HTML('''
         }
 
         function revealWord() {
+            playSound('revealWordSound', false, 0.4); // Specific calm sound for reveal
             document.getElementById('wordDisplay').classList.remove('word-hidden');
             document.getElementById('revealBtn').style.display = 'none';
             document.getElementById('nextBtn').style.display = 'block';
         }
 
         function nextPlayer() {
+            playSound('nextPlayerSound', false, 0.4); // Specific calm sound for next player
             gameState.currentPlayerIndex++;
 
             if (gameState.currentPlayerIndex >= gameState.playerCount) {
@@ -678,6 +790,8 @@ HTML('''
         function startTimer() {
             showScreen('timerScreen');
             let timeLeft = gameState.timerDuration;
+            stopSound('suspenseSound'); // Stop any lingering suspense sound
+            playSound('timerTickSound', true, 0.4); // Start ticking sound, loop, lower volume
 
             updateTimerDisplay(timeLeft);
 
@@ -687,6 +801,7 @@ HTML('''
 
                 if (timeLeft <= 0) {
                     clearInterval(gameState.timerInterval);
+                    stopSound('timerTickSound'); // Stop ticking sound
                     showVoting();
                 }
             }, 1000);
@@ -710,11 +825,15 @@ HTML('''
         }
 
         function skipToVoting() {
+            playClickSound();
             clearInterval(gameState.timerInterval);
+            stopSound('timerTickSound');
+            stopSound('suspenseSound');
             showVoting();
         }
 
         function showVoting() {
+            stopSound('timerTickSound'); // Ensure timer sound is stopped
             showScreen('votingScreen');
             document.getElementById('submitVoteBtn').style.display = 'none'; // Hide submit button until a selection is made
             document.getElementById('submitVoteBtn').textContent = 'Submit Vote';
@@ -725,6 +844,11 @@ HTML('''
 
             const votingGrid = document.getElementById('votingGrid');
             votingGrid.innerHTML = '';
+
+            // Play suspense sound when voting starts, but not on subsequent player votes in the same voting round
+            if (gameState.currentVotingPlayerIndex === 0) {
+                playSound('suspenseSound', true, 0.4); // Loop suspense sound, lower volume
+            }
 
             for (let i = 0; i < gameState.playerCount; i++) {
                 const playerCard = document.createElement('div');
@@ -756,6 +880,7 @@ HTML('''
         function selectPlayer(index, cardElement) {
             // Only allow selection if the card is not disabled (not the current voter)
             if (cardElement.classList.contains('disabled-voter')) return;
+            playClickSound(); // Play click sound when selecting a player
 
             // Remove previous selection for the *current* voter
             document.querySelectorAll('.player-card').forEach(card => {
@@ -772,6 +897,7 @@ HTML('''
 
         function submitVote() {
             if (gameState.selectedVote === null) return;
+            playClickSound(); // Click sound for submitting vote
 
             // Record the current player's vote
             gameState.individualPlayerVotes[gameState.currentVotingPlayerIndex] = gameState.selectedVote;
@@ -781,6 +907,7 @@ HTML('''
             gameState.selectedVote = null; // Reset selection for the next voter
 
             if (gameState.currentVotingPlayerIndex >= gameState.playerCount) {
+                stopSound('suspenseSound'); // Stop suspense sound before showing results
                 // All players have voted, tally and show results
                 tallyAllVotes();
                 showResults();
@@ -843,11 +970,13 @@ HTML('''
                 if (caught) {
                     resultMessage.textContent = '✅ Mr. White was caught!';
                     resultMessage.style.color = '#A8E063'; // Green for caught
+                    playSound('imposterCaughtSound', false, 0.4); // Play caught sound, lower volume
                 } else {
                     resultMessage.textContent = '❌ Mr. White escaped!';
                     resultMessage.style.color = '#F7DC6F'; // Yellow for escaped
                     // If imposter escaped, increment imposterWins
                     gameState.playerScores[gameState.imposterIndex].imposterWins++;
+                    playSound('imposterEscapedSound', false, 0.4); // Play escaped sound, lower volume
                 }
 
                 // Set up buttons for non-tie scenario
@@ -900,11 +1029,15 @@ HTML('''
         }
 
         function discussAgain() {
+            playClickSound(); // Click sound for discuss again button
             // Reset only voting related state for a new discussion/voting round
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null); // Clear previous votes
             gameState.tallyVotes = Array(gameState.playerCount).fill(0); // Clear previous tallies
             gameState.selectedVote = null;
+
+            stopSound('imposterCaughtSound'); // Ensure result sounds are stopped
+            stopSound('imposterEscapedSound');
 
             // Restart the timer for a new discussion phase
             startTimer();
@@ -917,6 +1050,9 @@ HTML('''
 
         // Renamed from playAgain() to playAgainFullReset()
         function playAgainFullReset() {
+            playClickSound(); // Click sound for new game button
+            stopSound('imposterCaughtSound');
+            stopSound('imposterEscapedSound');
             // Full game reset
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
@@ -924,17 +1060,24 @@ HTML('''
             gameState.selectedVote = null;
             gameState.playerNames = []; // Clear player names for a completely new game
             gameState.playerScores = []; // Clear scores for a completely new game
+            gameState.playerRevealOrder = []; // Clear reveal order for new game
 
             showScreen('setupScreen');
         }
 
         // New function to play again with same players
         function playAgainSamePlayers() {
+            playClickSound(); // Click sound for play again button
+            stopSound('imposterCaughtSound');
+            stopSound('imposterEscapedSound');
             // Reset game-round specific state variables but preserve player names and scores
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
             gameState.tallyVotes = Array(gameState.playerCount).fill(0);
             gameState.selectedVote = null;
+            // Regenerate and shuffle player reveal order for the new round
+            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
+            shuffleArray(gameState.playerRevealOrder);
 
             // Start a new game round with existing players and scores
             startGame();
