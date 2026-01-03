@@ -184,7 +184,8 @@ HTML('''
         }
 
         .player-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: #2C3E50; /* Dark blue background */
+            color: white; /* White text */
             padding: 20px;
             border-radius: 12px;
             text-align: center;
@@ -194,14 +195,15 @@ HTML('''
         }
 
         .player-card:hover:not(.disabled-voter) {
-            background: rgba(86, 204, 242, 0.2); /* Updated: Light blue background */
-            border-color: #56CCF2; /* Updated: Light blue border */
+            background: #34495E; /* Slightly lighter blue on hover */
+            border-color: #56CCF2; /* Light blue border on hover */
             transform: translateY(-3px);
         }
 
         .player-card.selected {
-            background: rgba(86, 204, 242, 0.3); /* Updated: Slightly darker light blue */
-            border-color: #56CCF2; /* Updated: Light blue border */
+            background: #F7DC6F; /* Yellow background for selected */
+            color: #1a202c; /* Dark text for selected */
+            border-color: #F7DC6F; /* Yellow border */
         }
 
         .player-card.disabled-voter {
@@ -214,6 +216,7 @@ HTML('''
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
+            color: inherit; /* Inherit color from parent (.player-card) */
         }
 
         .vote-count {
@@ -275,10 +278,197 @@ HTML('''
         #voteResults > div > span:first-child {
             color: #1a202c; /* Updated for better visibility */
         }
+
+        /* Fixed Buttons Container */
+        .fixed-buttons-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 10px; /* Space between buttons */
+        }
+
+        .back-btn {
+            width: auto;
+            min-width: 120px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Green to Blue gradient */
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-btn {
+            width: auto; /* Allow button to size naturally */
+            min-width: 120px; /* Give it a reasonable minimum width */
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #56CCF2, #A8E063); /* Blue to Green gradient */
+            color: white;
+            border: none;
+            border-radius: 25px; /* More rounded pill-shape */
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* New styles for error display */
+        #errorDisplay {
+            display: none; /* Hidden by default */
+            position: fixed; /* Fixed position relative to viewport */
+            top: 0; /* At the top */
+            left: 0; /* From the left */
+            width: 100%; /* Full width */
+            background-color: rgba(239, 68, 68, 0.9); /* Red background with transparency */
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10000; /* On top of everything */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border-bottom: 3px solid #EF4444;
+            animation-duration: 0.3s;
+            animation-fill-mode: forwards; /* Keep the end state of the animation */
+        }
+
+        @keyframes flashRed {
+            0% { background-color: rgba(239, 68, 68, 0.9); }
+            50% { background-color: rgba(255, 100, 100, 0.9); }
+            100% { background-color: rgba(239, 68, 68, 0.9); }
+        }
+
+        .error-flash {
+            animation-name: flashRed;
+        }
+
+        /* Styles for Settings Modal */
+        #settingsModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 10001; /* Above error message */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #settingsModal.active {
+            display: flex; /* Only show when active */
+        }
+
+        #settingsModal .modal-content {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            color: white;
+        }
+
+        #settingsModal h2 {
+            font-size: 30px;
+            margin-bottom: 25px;
+            color: #F7DC6F;
+        }
+
+        #settingsModal label {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        /* Retro Volume Slider Styling */
+        .volume-slider {
+            -webkit-appearance: none; /* Override default look */
+            appearance: none;
+            width: 80%; /* Full-width */
+            height: 10px;
+            background: #d3d3d3; /* Grey background */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+            transition: opacity .2s;
+            border-radius: 50px; /* Make it more rounded/pill-like */
+            margin: 20px auto; /* Center the slider */
+            display: block;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .volume-slider:hover {
+            opacity: 1; /* Fully opaque on hover */
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Override default look */
+            appearance: none;
+            width: 28px; /* Set a specific slider handle width */
+            height: 28px; /* Set a specific slider handle height */
+            border-radius: 50%; /* Round slider handle */
+            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Blue to Green gradient */
+            cursor: pointer; /* Cursor on hover */
+            border: 4px solid #1a202c; /* Dark border */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 28px; /* Set a specific slider handle width */
+            height: 28px; /* Set a specific slider handle height */
+            border-radius: 50%; /* Round slider handle */
+            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Blue to Green gradient */
+            cursor: pointer; /* Cursor on hover */
+            border: 4px solid #1a202c; /* Dark border */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* Override generic button style for modal's back button */
+        #settingsModal .btn {
+            background: linear-gradient(135deg, #F7DC6F, #A8E063); /* Yellow to Green gradient */
+            color: #1a202c;
+            font-weight: 700;
+            margin-top: 30px;
+            width: 80%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Error Display Element -->
+        <div id="errorDisplay" style="display: none;">Error message goes here!</div>
+
         <!-- Setup Screen -->
         <div id="setupScreen" class="screen active">
             <div class="card">
@@ -397,7 +587,8 @@ HTML('''
 
                     <div style="display: flex; gap: 10px; margin-top: 30px;">
                         <button class="btn" onclick="playAgainSamePlayers()">Play Again (Same Players)</button>
-                        <button class="btn btn-secondary" onclick="playAgainFullReset()">New Game (Reset Players)
+                        <button class="btn btn-secondary" onclick="playAgainFullReset()">
+                        New Game (Reset Players)
                         </button>
                     </div>
                 </div>
@@ -411,7 +602,23 @@ HTML('''
                 <p class="subtitle">The votes are split. Discuss again to find Mr. White!</p>
                 <button class="btn" onclick="discussAgainFromTieScreen()">Start New Discussion</button>
             </div>
-        }
+        </div>
+    </div>
+
+    <!-- Fixed Buttons Container -->
+    <div class="fixed-buttons-container">
+        <button class="btn back-btn" id="backButton" onclick="goBack()" style="display: none;">⬅️ Back</button>
+        <button class="btn settings-btn" onclick="openSettingsModal()">⚙️ Settings</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="screen">
+        <div class="modal-content card">
+            <h2>⚙️ Game Settings</h2>
+            <label for="volumeSlider">Volume</label>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1">
+            <button class="btn" onclick="closeSettingsModal()">Back</button>
+        </div>
     </div>
 
     <!-- Audio Elements -->
@@ -419,16 +626,22 @@ HTML('''
     <audio id="revealWordSound" src="https://www.soundjay.com/buttons/button-2.mp3" preload="auto"></audio>
     <audio id="nextPlayerSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
     <audio id="timerTickSound" src="https://www.soundjay.com/misc/ticking-clock-3.mp3" preload="auto"></audio>
-    <audio id="suspenseSound" src="https://www.soundjay.com/misc/suspense-sound.mp3" preload="auto"></audio>
+    <audio id="votingStartSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
     <audio id="imposterCaughtSound" src="https://www.soundjay.com/applause/applause-2.mp3" preload="auto"></audio>
     <audio id="imposterEscapedSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
+    <audio id="errorSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
 
     <script>
+        let globalVolume = 1.0; // Global volume variable
+        let currentScreenId = 'setupScreen'; // Tracks the currently visible screen
+        let previousScreenId = 'setupScreen'; // Tracks the screen before current
+
         function playSound(soundId, loop = false, volume = 1.0) {
             const audio = document.getElementById(soundId);
             if (audio) {
                 audio.loop = loop;
-                audio.volume = volume;
+                audio.volume = volume * globalVolume; // Apply global volume
+                console.log(`Playing sound: ${soundId}, Base Volume: ${volume}, Global Volume: ${globalVolume}, Final Audio Volume: ${audio.volume}`); // More detailed debugging
                 audio.play().catch(e => console.error("Error playing sound:", e));
             }
         }
@@ -568,7 +781,6 @@ HTML('''
             { normal: "ROUTER", imposter: "MODEM" },
             { normal: "CHARGER", imposter: "BATTERY" },
             { normal: "USB", imposter: "HDMI" },
-            { normal: "SOFTWARE", imposter: "FIRMWARE" },
             { normal: "MICROPHONE", imposter: "VOICEOVER" },
             { normal: "PRINTER", imposter: "SCANNER" },
             { normal: "DATABASE", imposter: "SPREADSHEET" },
@@ -676,7 +888,8 @@ HTML('''
             tallyVotes: [],
             playerNames: [], // Added: to store individual player names
             playerScores: [], // Added: to track imposterCount and imposterWins for each player
-            playerRevealOrder: [] // Added: to store the shuffled order of players for word reveal
+            playerRevealOrder: [], // Added: to store the shuffled order of players for word reveal
+            screenBeforeSettings: 'setupScreen' // New: to store the screen before settings was opened
         };
 
         function showPlayerNamingScreen() {
@@ -685,6 +898,7 @@ HTML('''
             gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
             showScreen('playerNamingScreen');
             generatePlayerNameInputs();
+            // document.querySelector('#playerNamingScreen .btn').disabled = true; // No longer needed, validation is now in proceedToGame()
         }
 
         function generatePlayerNameInputs() {
@@ -697,17 +911,42 @@ HTML('''
                     <label for="player${i + 1}Name">Player ${i + 1} Name:</label>
                     <input type="text" id="player${i + 1}Name" placeholder="Player ${i + 1}">
                 `;
+                // inputElement.addEventListener('input', checkAllNamesEntered); // No longer needed for disabling button
                 container.appendChild(inputGroup);
             }
+            // checkAllNamesEntered(); // No longer needed
         }
+
+        // The checkAllNamesEntered function has been removed as per the new validation approach.
 
         function proceedToGame() {
             playClickSound();
-            gameState.playerNames = [];
+            let currentNames = [];
+            let allNamesFilled = true; // Flag for validation
+
             for (let i = 0; i < gameState.playerCount; i++) {
                 const inputElement = document.getElementById(`player${i + 1}Name`);
-                gameState.playerNames.push(inputElement.value.trim() || `Player ${i + 1}`);
+                const playerName = inputElement.value.trim();
+                if (playerName === '') {
+                    allNamesFilled = false; // Mark as not all names filled
+                }
+                currentNames.push(playerName || `Player ${i + 1}`); // Collect all names, using default for empty ones for later uniqueness check
             }
+
+            if (!allNamesFilled) {
+                showError('Please enter a name for all players!');
+                return; // Stop function execution if not all names are filled
+            }
+
+            // Check for duplicate names (case-insensitive and trimming whitespace)
+            const uniqueNames = new Set(currentNames.map(name => name.toLowerCase()));
+            if (uniqueNames.size !== currentNames.length) {
+                showError('All player names must be unique!');
+                return; // Stop game progression if duplicate names are found
+            }
+
+            gameState.playerNames = currentNames; // Store validated names
+
             startGame();
         }
 
@@ -765,14 +1004,31 @@ HTML('''
             document.getElementById('wordText').textContent = wordText;
             document.getElementById('wordDisplay').classList.add('word-hidden');
             document.getElementById('revealBtn').style.display = 'block';
-            document.getElementById('nextBtn').style.display = 'none';
+
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.style.display = 'none';
+            nextBtn.disabled = false; // Ensure it's not disabled from a previous round if it was left disabled
         }
 
         function revealWord() {
             playSound('revealWordSound', false, 0.4); // Specific calm sound for reveal
+
+            const revealWordAudio = document.getElementById('revealWordSound');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Disable next button immediately when sound starts playing
+            nextBtn.disabled = true;
+
+            // Enable next button when sound ends
+            const enableNextBtn = () => {
+                nextBtn.disabled = false;
+                revealWordAudio.removeEventListener('ended', enableNextBtn); // Remove listener to prevent multiple calls
+            };
+            revealWordAudio.addEventListener('ended', enableNextBtn);
+
             document.getElementById('wordDisplay').classList.remove('word-hidden');
             document.getElementById('revealBtn').style.display = 'none';
-            document.getElementById('nextBtn').style.display = 'block';
+            nextBtn.style.display = 'block';
         }
 
         function nextPlayer() {
@@ -790,7 +1046,7 @@ HTML('''
         function startTimer() {
             showScreen('timerScreen');
             let timeLeft = gameState.timerDuration;
-            stopSound('suspenseSound'); // Stop any lingering suspense sound
+            stopSound('votingStartSound'); // Stop voting sound if it was playing
             playSound('timerTickSound', true, 0.4); // Start ticking sound, loop, lower volume
 
             updateTimerDisplay(timeLeft);
@@ -828,7 +1084,7 @@ HTML('''
             playClickSound();
             clearInterval(gameState.timerInterval);
             stopSound('timerTickSound');
-            stopSound('suspenseSound');
+            stopSound('votingStartSound'); // Stop voting sound
             showVoting();
         }
 
@@ -839,15 +1095,14 @@ HTML('''
             document.getElementById('submitVoteBtn').textContent = 'Submit Vote';
             document.getElementById('submitVoteBtn').disabled = false;
 
-            // 2. Update voting prompt to display the name of the current voting player
             document.getElementById('votingPrompt').textContent = `${gameState.playerNames[gameState.currentVotingPlayerIndex]}, cast your vote!`
 
             const votingGrid = document.getElementById('votingGrid');
             votingGrid.innerHTML = '';
 
-            // Play suspense sound when voting starts, but not on subsequent player votes in the same voting round
+            // Play new voting start sound (not looping)
             if (gameState.currentVotingPlayerIndex === 0) {
-                playSound('suspenseSound', true, 0.4); // Loop suspense sound, lower volume
+                playSound('votingStartSound', false, 0.4); // Changed from suspenseSound, no loop
             }
 
             for (let i = 0; i < gameState.playerCount; i++) {
@@ -896,7 +1151,10 @@ HTML('''
         }
 
         function submitVote() {
-            if (gameState.selectedVote === null) return;
+            if (gameState.selectedVote === null) {
+                showError('Please select a player to vote for!'); // Use the new error display
+                return; // Prevent submission if no player is selected
+            }
             playClickSound(); // Click sound for submitting vote
 
             // Record the current player's vote
@@ -907,11 +1165,12 @@ HTML('''
             gameState.selectedVote = null; // Reset selection for the next voter
 
             if (gameState.currentVotingPlayerIndex >= gameState.playerCount) {
-                stopSound('suspenseSound'); // Stop suspense sound before showing results
+                stopSound('votingStartSound'); // Stop voting sound before showing results
                 // All players have voted, tally and show results
                 tallyAllVotes();
                 showResults();
-            } else {
+            }
+            else {
                 // Next player to vote, re-render voting screen
                 showVoting();
             }
@@ -1038,6 +1297,7 @@ HTML('''
 
             stopSound('imposterCaughtSound'); // Ensure result sounds are stopped
             stopSound('imposterEscapedSound');
+            stopSound('votingStartSound'); // Ensure voting start sound is stopped
 
             // Restart the timer for a new discussion phase
             startTimer();
@@ -1053,6 +1313,7 @@ HTML('''
             playClickSound(); // Click sound for new game button
             stopSound('imposterCaughtSound');
             stopSound('imposterEscapedSound');
+            stopSound('votingStartSound'); // Ensure voting start sound is stopped
             // Full game reset
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
@@ -1070,6 +1331,7 @@ HTML('''
             playClickSound(); // Click sound for play again button
             stopSound('imposterCaughtSound');
             stopSound('imposterEscapedSound');
+            stopSound('votingStartSound'); // Ensure voting start sound is stopped
             // Reset game-round specific state variables but preserve player names and scores
             gameState.currentVotingPlayerIndex = 0;
             gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
@@ -1083,12 +1345,86 @@ HTML('''
             startGame();
         }
 
+        // Function to open settings modal
+        function openSettingsModal() {
+            playClickSound();
+            gameState.screenBeforeSettings = currentScreenId; // Store the current screen before opening settings
+            document.getElementById('volumeSlider').value = globalVolume; // Set slider to current global volume
+            showScreen('settingsModal');
+        }
+
+        // Function to close settings modal
+        function closeSettingsModal() {
+            playClickSound();
+            showScreen(gameState.screenBeforeSettings); // Go back to the screen stored before settings was opened
+        }
+
+        function goBack() {
+            playClickSound();
+            showScreen(previousScreenId);
+        }
+
         function showScreen(screenId) {
+            if (currentScreenId !== screenId) { // Only update if the screen is actually changing
+                // Only save previousScreenId if the current screen is not the settings modal.
+                // This ensures previousScreenId tracks main game screen transitions correctly.
+                if (currentScreenId !== 'settingsModal') {
+                    previousScreenId = currentScreenId;
+                }
+                currentScreenId = screenId;
+            }
+
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             document.getElementById(screenId).classList.add('active');
+
+            // Control visibility of back button
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                // Hide back button during specific game phases
+                if (screenId === 'revealScreen' || screenId === 'timerScreen' || screenId === 'votingScreen' || screenId === 'resultsScreen' || screenId === 'tieAnnouncementScreen' || screenId === 'setupScreen') {
+                    backButton.style.display = 'none';
+                } else {
+                    backButton.style.display = 'block';
+                }
+            }
         }
+
+        // New functions for error display
+        let errorTimeout;
+        function showError(message) {
+            const errorDiv = document.getElementById('errorDisplay');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.classList.add('error-flash'); // Add class for animation
+            playSound('errorSound', false, 0.6); // Play error sound
+
+            // Clear any existing timeout to prevent multiple errors from conflicting
+            clearTimeout(errorTimeout);
+            errorTimeout = setTimeout(() => {
+                hideError();
+            }, 4000); // Hide after 4 seconds
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('errorDisplay');
+            errorDiv.style.display = 'none';
+            errorDiv.classList.remove('error-flash'); // Remove class to reset animation
+            stopSound('errorSound'); // Stop error sound if it's still playing
+        }
+
+        // Event listener for the volume slider to update globalVolume
+        document.addEventListener('DOMContentLoaded', () => {
+            const volumeSlider = document.getElementById('volumeSlider');
+            if (volumeSlider) {
+                volumeSlider.addEventListener('input', (event) => {
+                    globalVolume = parseFloat(event.target.value);
+                    // Play a quick click sound at the new volume for feedback
+                    playSound('clickSound', false, 0.1);
+                });
+            }
+        });
     </script>
 </body>
 </html>''')
