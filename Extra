@@ -1,0 +1,1094 @@
+from IPython.display import HTML
+HTML('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1F2937">
+    <title>Mr. White - Find the Imposter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #A8E063 0%, #56CCF2 100%); /* Updated: Green and Light Blue */
+            min-height: 100vh;
+            color: #1a202c; /* Updated for better contrast */
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1a202c; /* Updated for better visibility: Solid dark color */
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #2d3748; /* Updated: Darker grey for better visibility */
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748; /* Updated: Darker grey for better visibility */
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(168, 224, 99, 0.2); /* Updated: Lighter green */
+            border: 2px solid rgba(255, 255, 255,0.05);
+            border-radius: 12px;
+            color: #1a202c; /* Updated: Darker text for input fields */
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #F7DC6F; /* Updated: Yellow */
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #A8E063, #F7DC6F); /* Updated: Green and Yellow */
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+
+        .word-reveal {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .player-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1a202c; /* Updated for better visibility */
+            margin-bottom: 20px;
+        }
+
+        .word-display {
+            font-size: 42px;
+            font-weight: bold;
+            padding: 30px;
+            background: rgba(86, 204, 242, 0.2); /* Updated: Light blue background */
+            border-radius: 16px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word-hidden {
+            filter: blur(15px);
+            user-select: none;
+        }
+
+        .imposter-tag {
+            background: linear-gradient(135deg, #F7DC6F, #6B8E23); /* Updated: Yellow and darker green */
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 72px;
+            font-weight: bold;
+            color: #2D3748; /* Updated to a darker color for visibility */
+            margin: 40px 0;
+        }
+
+        .timer.warning {
+            color: #F7DC6F; /* Updated: Light yellow */
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: #EF4444;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .player-card:hover:not(.disabled-voter) {
+            background: rgba(86, 204, 242, 0.2); /* Updated: Light blue background */
+            border-color: #56CCF2; /* Updated: Light blue border */
+            transform: translateY(-3px);
+        }
+
+        .player-card.selected {
+            background: rgba(86, 204, 242, 0.3); /* Updated: Slightly darker light blue */
+            border-color: #56CCF2; /* Updated: Light blue border */
+        }
+
+        .player-card.disabled-voter {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .player-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .vote-count {
+            font-size: 24px;
+            color: #A8E063; /* Updated: Green */
+            font-weight: bold;
+        }
+
+        .results {
+            text-align: center;
+        }
+
+        .result-message {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .revealed-player {
+            background: rgba(239, 68, 68, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .revealed-player div[style*="font-size: 18px"] {
+            color: #2d3748; /* Updated for better visibility */
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #2d3748; /* Updated for better visibility */
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        #votingPrompt {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a202c; /* Updated for better visibility */
+            margin-bottom: 20px;
+        }
+
+        .player-name-input {
+            margin-bottom: 15px;
+        }
+        .scoreboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #1a202c; /* Updated for better visibility */
+        }
+        .scoreboard-header {
+            font-weight: bold;
+            color: #F7DC6F;
+        }
+        #voteResults > div > span:first-child {
+            color: #1a202c; /* Updated for better visibility */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="screen active">
+            <div class="card">
+                <h1>🎭 Mr. White</h1>
+                <p class="subtitle">Find the imposter among you!</p>
+
+                <label for="playerCount">Number of Players</label>
+                <select id="playerCount">
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                    <option value="5" selected>5 Players</option>
+                    <option value="6">6 Players</option>
+                    <option value="7">7 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="9">9 Players</n>
+                    <option value="10">10 Players</option>
+                </select>
+
+                <label for="timerDuration">Discussion Time (seconds)</label>
+                <select id="timerDuration">
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="90">1.5 minutes</n>
+                    <option value="120" selected>2 minutes</option>
+                    <option value="180">3 minutes</option>
+                    <option value="300">5 minutes</option>
+                </select>
+
+                <button class="btn" onclick="showPlayerNamingScreen()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Player Naming Screen -->
+        <div id="playerNamingScreen" class="screen">
+            <div class="card">
+                <h1>✏️ Name Your Players</h1>
+                <p class="subtitle">Enter a name for each player.</p>
+                <div id="playerNamesInputContainer"></div>
+                <button class="btn" onclick="proceedToGame()">Continue</button>
+            </div>
+        </div>
+
+        <!-- Word Reveal Screen -->
+        <div id="revealScreen" class="screen">
+            <div class="card">
+                <div class="word-reveal">
+                    <div class="player-number"><span id="currentPlayerName">Player 1</span></div>
+
+                    <div id="wordDisplay" class="word-display word-hidden">
+                        <span id="wordText">BANANA</span>
+                    </div>
+
+                    <button class="btn" id="revealBtn" onclick="revealWord()">Tap to See Your Word</button>
+                    <button class="btn btn-secondary" id="nextBtn" onclick="nextPlayer()" style="display: none;">Next Player</button>
+
+                    <div class="progress-text">
+                        <span id="progressText">Player 1 of 5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Screen -->
+        <div id="timerScreen" class="screen">
+            <div class="card">
+                <h1>⏱️ Discussion Time</h1>
+                <p class="subtitle">Discuss and find Mr. White!</p>
+
+                <div class="timer" id="timer">2:00</div>
+
+                <button class="btn btn-secondary" onclick="skipToVoting()">Skip to Voting</button>
+            </div>
+        </div>
+
+        <!-- Voting Screen -->
+        <div id="votingScreen" class="screen">
+            <div class="card">
+                <h1>🗳️ Vote for the Imposter</h1>
+                <p id="votingPrompt">Player X, cast your vote!</p>
+                <p class="subtitle" style="margin-top: 0;">Who do you think is Mr. White?</p>
+
+                <div class="player-grid" id="votingGrid"></div>
+
+                <button class="btn" id="submitVoteBtn" onclick="submitVote()" style="margin-top: 20px; display: none;">Submit Vote</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="card">
+                <div class="results">
+                    <h1>🎉 Game Over!</h1>
+
+                    <div class="result-message" id="resultMessage"></div>
+
+                    <div class="revealed-player">
+                        <div style="font-size: 18px; margin-bottom: 10px; color: #2d3748;">Mr. White was:</div>
+                        <div style="font-size: 32px; font-weight: bold;" id="imposterReveal">Player 3</div>
+                        <div style="margin-top: 10px; font-size: 20px; color: #56CCF2;" id="imposterWord">Word: APPLE</div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 18px; margin-bottom: 10px; color: #2d3748;">Everyone else had:</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #A8E063;" id="normalWord">BANANA</div>
+                    </div>
+
+                    <div id="voteResultsContainer" style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 16px; color: #2d3748; margin-bottom: 15px;">Final Votes:</div>
+                        <div id="voteResults"></div>
+                    </div>
+
+                    <div id="scoreboardSection" style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 20px; color: #F7DC6F; margin-bottom: 15px; font-weight: bold;">Scoreboard</div>
+                        <div id="scoreboardContainer"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button class="btn" onclick="playAgainSamePlayers()">Play Again (Same Players)</button>
+                        <button class="btn btn-secondary" onclick="playAgainFullReset()">New Game (Reset Players)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tie Announcement Screen -->
+        <div id="tieAnnouncementScreen" class="screen">
+            <div class="card">
+                <h1>It's a Tie!</h1>
+                <p class="subtitle">The votes are split. Discuss again to find Mr. White!</p>
+                <button class="btn" onclick="discussAgainFromTieScreen()">Start New Discussion</button>
+            </div>
+        }
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/button-1.mp3" preload="auto"></audio>
+    <audio id="revealWordSound" src="https://www.soundjay.com/buttons/button-2.mp3" preload="auto"></audio>
+    <audio id="nextPlayerSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
+    <audio id="timerTickSound" src="https://www.soundjay.com/misc/ticking-clock-3.mp3" preload="auto"></audio>
+    <audio id="suspenseSound" src="https://www.soundjay.com/misc/suspense-sound.mp3" preload="auto"></audio>
+    <audio id="imposterCaughtSound" src="https://www.soundjay.com/applause/applause-2.mp3" preload="auto"></audio>
+    <audio id="imposterEscapedSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
+
+    <script>
+        function playSound(soundId, loop = false, volume = 1.0) {
+            const audio = document.getElementById(soundId);
+            if (audio) {
+                audio.loop = loop;
+                audio.volume = volume;
+                audio.play().catch(e => console.error("Error playing sound:", e));
+            }
+        }
+
+        function stopSound(soundId) {
+            const audio = document.getElementById(soundId);
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0; // Reset to start
+            }
+        }
+
+        function playClickSound() {
+            playSound('clickSound', false, 0.3); // Play click sound, no loop, reduced volume
+        }
+
+        // Game database - 100+ word pairs for maximum variety
+        const wordDatabase = [
+            // Food & Drinks
+            { normal: "APPLE", imposter: "ORANGE" },
+            { normal: "COFFEE", imposter: "TEA" },
+            { normal: "PIZZA", imposter: "BURGER" },
+            { normal: "CHOCOLATE", imposter: "VANILLA" },
+            { normal: "BREAD", imposter: "RICE" },
+            { normal: "CHICKEN", imposter: "BEEF" },
+            { normal: "JUICE", imposter: "SODA" },
+            { normal: "CAKE", imposter: "PIE" },
+            { normal: "PASTA", imposter: "NOODLES" },
+            { normal: "MILK", imposter: "YOGURT" },
+            { normal: "COOKIE", imposter: "BISCUIT" },
+            { normal: "SANDWICH", imposter: "WRAP" },
+            { normal: "SOUP", imposter: "STEW" },
+            { normal: "STEAK", imposter: "CHOP" },
+            { normal: "SALAD", imposter: "COLESLAW" },
+
+            // Animals
+            { normal: "DOG", imposter: "CAT" },
+            { normal: "LION", imposter: "TIGER" },
+            { normal: "ELEPHANT", imposter: "RHINO" },
+            { normal: "EAGLE", imposter: "HAWK" },
+            { normal: "SHARK", imposter: "WHALE" },
+            { normal: "SNAKE", imposter: "LIZARD" },
+            { normal: "HORSE", imposter: "ZEBRA" },
+            { normal: "WOLF", imposter: "FOX" },
+            { normal: "BEAR", imposter: "PANDA" },
+            { normal: "RABBIT", imposter: "HARE" },
+            { normal: "PENGUIN", imposter: "PUFFIN" },
+            { normal: "DOLPHIN", imposter: "SEAL" },
+            { normal: "BUTTERFLY", imposter: "MOTH" },
+            { normal: "CROW", imposter: "RAVEN" },
+            { normal: "FROG", imposter: "TOAD" },
+            { normal: "GIRAFFE", imposter: "CAMEL" },
+            { normal: "KOALA", imposter: "SLOTH" },
+            { normal: "KANGAROO", imposter: "WALLABY" },
+            { normal: "OCTOPUS", imposter: "SQUID" },
+            { normal: "PARROT", imposter: "MACAW" },
+
+            // Nature & Weather
+            { normal: "SUMMER", imposter: "WINTER" },
+            { normal: "MOUNTAIN", imposter: "OCEAN" },
+            { normal: "RAIN", imposter: "SNOW" },
+            { normal: "SUNRISE", imposter: "SUNSET" },
+            { normal: "STAR", imposter: "PLANET" },
+            { normal: "RIVER", imposter: "LAKE" },
+            { normal: "FOREST", imposter: "JUNGLE" },
+            { normal: "DESERT", imposter: "TUNDRA" },
+            { normal: "CLOUD", imposter: "FOG" },
+            { normal: "WIND", imposter: "BREEZE" },
+            { normal: "THUNDER", imposter: "LIGHTNING" },
+            { normal: "ISLAND", imposter: "PENINSULA" },
+            { normal: "VALLEY", imposter: "CANYON" },
+            { normal: "VOLCANO", imposter: "GEYSER" },
+            { normal: "AURORA", imposter: "RAINBOW" },
+            { normal: "GLACIER", imposter: "ICEBERG" },
+            { normal: "OASIS", imposter: "MIRAGE" },
+            { normal: "WATERFALL", imposter: "RAPIDS" },
+            { normal: "CAVE", imposter: "GROTTO" },
+
+            // Transportation
+            { normal: "CAR", imposter: "MOTORCYCLE" },
+            { normal: "AIRPLANE", imposter: "HELICOPTER" },
+            { normal: "TRAIN", imposter: "SUBWAY" },
+            { normal: "BOAT", imposter: "SHIP" },
+            { normal: "BICYCLE", imposter: "SCOOTER" },
+            { normal: "BUS", imposter: "VAN" },
+            { normal: "TRUCK", imposter: "PICKUP" },
+            { normal: "JET", imposter: "ROCKET" },
+            { normal: "YACHT", imposter: "SAILBOAT" },
+            { normal: "TAXI", imposter: "UBER" },
+            { normal: "HOT AIR BALLOON", imposter: "ZEPPELIN" },
+            { normal: "CANOE", imposter: "ROWBOAT" },
+            { normal: "CRUISE SHIP", imposter: "FERRY" },
+            { normal: "CABLE CAR", imposter: "GONDOLA" },
+            { normal: "RICKSHAW", imposter: "PEDICAB" },
+
+            // Sports & Games
+            { normal: "BASKETBALL", imposter: "FOOTBALL" },
+            { normal: "TENNIS", imposter: "BADMINTON" },
+            { normal: "SOCCER", imposter: "HOCKEY" },
+            { normal: "CHESS", imposter: "CHECKERS" },
+            { normal: "GOLF", imposter: "CRICKET" },
+            { normal: "BOXING", imposter: "WRESTLING" },
+            { normal: "RUNNING", imposter: "JOGGING" },
+            { normal: "SWIMMING", imposter: "DIVING" },
+            { normal: "SKIING", imposter: "SNOWBOARDING" },
+            { normal: "SURFING", imposter: "KAYAKING" },
+            { normal: "POKER", imposter: "BLACKJACK" },
+            { normal: "RUGBY", imposter: "AMERICAN FOOTBALL" },
+            { normal: "ARCHERY", imposter: "DARTS" },
+            { normal: "FENCING", imposter: "KENDO" },
+            { normal: "MARATHON", imposter: "TRIATHLON" },
+
+            // Music & Instruments
+            { normal: "GUITAR", imposter: "BASS" },
+            { normal: "PIANO", imposter: "KEYBOARD" },
+            { normal: "DRUM", imposter: "BONGO" },
+            { normal: "VIOLIN", imposter: "CELLO" },
+            { normal: "FLUTE", imposter: "CLARINET" },
+            { normal: "TRUMPET", imposter: "SAXOPHONE" },
+            { normal: "ROCK", imposter: "METAL" },
+            { normal: "JAZZ", imposter: "BLUES" },
+            { normal: "POP", imposter: "RAP" },
+            { normal: "OPERA", imposter: "BROADWAY" },
+            { normal: "HARP", imposter: "LYRE" },
+            { normal: "SYNTHESIZER", imposter: "ORGAN" },
+            { normal: "CONDUCTOR", imposter: "COMPOSER" },
+            { normal: "ALBUM", imposter: "PLAYLIST" },
+
+            // Technology
+            { normal: "PHONE", imposter: "TABLET" },
+            { normal: "LAPTOP", imposter: "DESKTOP" },
+            { normal: "MOUSE", imposter: "TRACKPAD" },
+            { normal: "MONITOR", imposter: "SCREEN" },
+            { normal: "KEYBOARD", imposter: "TYPEWRITER" },
+            { normal: "CAMERA", imposter: "CAMCORDER" },
+            { normal: "SPEAKER", imposter: "HEADPHONES" },
+            { normal: "ROUTER", imposter: "MODEM" },
+            { normal: "CHARGER", imposter: "BATTERY" },
+            { normal: "USB", imposter: "HDMI" },
+            { normal: "SOFTWARE", imposter: "FIRMWARE" },
+            { normal: "MICROPHONE", imposter: "VOICEOVER" },
+            { normal: "PRINTER", imposter: "SCANNER" },
+            { normal: "DATABASE", imposter: "SPREADSHEET" },
+            { normal: "ALGORITHM", imposter: "HEURISTIC" },
+
+            // Clothing
+            { normal: "SHIRT", imposter: "BLOUSE" },
+            { normal: "PANTS", imposter: "JEANS" },
+            { normal: "JACKET", imposter: "COAT" },
+            { normal: "SHOES", imposter: "BOOTS" },
+            { normal: "HAT", imposter: "CAP" },
+            { normal: "DRESS", imposter: "SKIRT" },
+            { normal: "SWEATER", imposter: "HOODIE" },
+            { normal: "SOCKS", imposter: "STOCKINGS" },
+            { normal: "GLOVES", imposter: "MITTENS" },
+            { normal: "SCARF", imposter: "SHAWL" },
+            { normal: "TIE", imposter: "BOW TIE" },
+            { normal: "VEST", imposter: "WAISTCOAT" },
+            { normal: "OVERALLS", imposter: "DUNGAREES" },
+            { normal: "PAJAMAS", imposter: "NIGHTGOWN" },
+            { normal: "RAINCOAT", imposter: "PONCHO" },
+
+            // Professions
+            { normal: "DOCTOR", imposter: "NURSE" },
+            { normal: "TEACHER", imposter: "PROFESSOR" },
+            { normal: "CHEF", imposter: "COOK" },
+            { normal: "PILOT", imposter: "CAPTAIN" },
+            { normal: "LAWYER", imposter: "JUDGE" },
+            { normal: "ARTIST", imposter: "PAINTER" },
+            { normal: "ENGINEER", imposter: "ARCHITECT" },
+            { normal: "WRITER", imposter: "AUTHOR" },
+            { normal: "ACTOR", imposter: "ACTRESS" },
+            { normal: "SINGER", imposter: "VOCALIST" },
+            { normal: "ELECTRICIAN", imposter: "PLUMBER" },
+            { normal: "SCIENTIST", imposter: "RESEARCHER" },
+            { normal: "JOURNALIST", imposter: "REPORTER" },
+            { normal: "VETERINARIAN", imposter: "ZOOLOGIST" },
+            { normal: "DENTIST", imposter: "ORTHODONTIST" },
+
+            // Objects & Items
+            { normal: "BOOK", imposter: "MAGAZINE" },
+            { normal: "PEN", imposter: "PENCIL" },
+            { normal: "CHAIR", imposter: "STOOL" },
+            { normal: "TABLE", imposter: "DESK" },
+            { normal: "CUP", imposter: "MUG" },
+            { normal: "PLATE", imposter: "BOWL" },
+            { normal: "KNIFE", imposter: "SWORD" },
+            { normal: "LAMP", imposter: "CANDLE" },
+            { normal: "PILLOW", imposter: "CUSHION" },
+            { normal: "BLANKET", imposter: "QUILT" },
+            { normal: "MIRROR", imposter: "WINDOW" },
+            { normal: "CLOCK", imposter: "WATCH" },
+            { normal: "WALLET", imposter: "PURSE" },
+            { normal: "BACKPACK", imposter: "SUITCASE" },
+            { normal: "UMBRELLA", imposter: "PARASOL" },
+            { normal: "FORK", imposter: "SPOON" },
+            { normal: "SCISSORS", imposter: "SHEARS" },
+            { normal: "HAMMER", imposter: "MALLET" },
+            { normal: "BRUSH", imposter: "COMB" },
+            { normal: "KEY", imposter: "LOCK" },
+
+            // Royalty & Mythology
+            { normal: "KING", imposter: "EMPEROR" },
+            { normal: "QUEEN", imposter: "PRINCESS" },
+            { normal: "KNIGHT", imposter: "WARRIOR" },
+            { normal: "WIZARD", imposter: "SORCERER" },
+            { normal: "DRAGON", imposter: "WYVERN" },
+            { normal: "FAIRY", imposter: "PIXIE" },
+            { normal: "VAMPIRE", imposter: "WEREWOLF" },
+            { normal: "GHOST", imposter: "SPIRIT" },
+            { normal: "ANGEL", imposter: "DEMON" },
+            { normal: "GIANT", imposter: "TITAN" },
+            { normal: "MERMAID", imposter: "SIREN" },
+            { normal: "CENTAUR", imposter: "SATYR" },
+            { normal: "UNICORN", imposter: "PEGASUS" },
+            { normal: "PHOENIX", imposter: "GRIFFIN" },
+            { normal: "MINOTAUR", imposter: "HARPY" },
+
+            // Everyday Items
+            { normal: "COUCH", imposter: "SOFA" },
+            { normal: "CARPET", imposter: "RUG" },
+            { normal: "VASE", imposter: "POT" },
+            { normal: "TOWEL", imposter: "CLOTH" },
+            { normal: "WINDOW", imposter: "PANE" },
+
+            // Abstract Concepts
+            { normal: "HAPPINESS", imposter: "JOY" },
+            { normal: "BRAVERY", imposter: "COURAGE" },
+            { normal: "WISDOM", imposter: "KNOWLEDGE" },
+            { normal: "FREEDOM", imposter: "LIBERTY" },
+            { normal: "PEACE", imposter: "CALM" }
+        ];
+
+        let gameState = {
+            playerCount: 5,
+            timerDuration: 120,
+            currentPlayerIndex: 0,
+            imposterIndex: 0,
+            wordPair: null,
+            playerWords: [],
+            timerInterval: null,
+            selectedVote: null,
+            currentVotingPlayerIndex: 0,
+            individualPlayerVotes: [],
+            tallyVotes: [],
+            playerNames: [], // Added: to store individual player names
+            playerScores: [], // Added: to track imposterCount and imposterWins for each player
+            playerRevealOrder: [] // Added: to store the shuffled order of players for word reveal
+        };
+
+        function showPlayerNamingScreen() {
+            playClickSound();
+            gameState.playerCount = parseInt(document.getElementById('playerCount').value);
+            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
+            showScreen('playerNamingScreen');
+            generatePlayerNameInputs();
+        }
+
+        function generatePlayerNameInputs() {
+            const container = document.getElementById('playerNamesInputContainer');
+            container.innerHTML = ''; // Clear previous inputs
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'player-name-input';
+                inputGroup.innerHTML = `
+                    <label for="player${i + 1}Name">Player ${i + 1} Name:</label>
+                    <input type="text" id="player${i + 1}Name" placeholder="Player ${i + 1}">
+                `;
+                container.appendChild(inputGroup);
+            }
+        }
+
+        function proceedToGame() {
+            playClickSound();
+            gameState.playerNames = [];
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const inputElement = document.getElementById(`player${i + 1}Name`);
+                gameState.playerNames.push(inputElement.value.trim() || `Player ${i + 1}`);
+            }
+            startGame();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
+
+        function startGame() {
+            // Select random word pair
+            gameState.wordPair = wordDatabase[Math.floor(Math.random() * wordDatabase.length)];
+
+            // Randomly select imposter
+            gameState.imposterIndex = Math.floor(Math.random() * gameState.playerCount);
+
+            // Assign words to players
+            gameState.playerWords = [];
+            for (let i = 0; i < gameState.playerCount; i++) {
+                gameState.playerWords.push({
+                    word: i === gameState.imposterIndex ? gameState.wordPair.imposter : gameState.wordPair.normal,
+                    isImposter: i === gameState.imposterIndex
+                });
+            }
+
+            // Generate and shuffle player reveal order
+            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
+            shuffleArray(gameState.playerRevealOrder);
+
+            // Initialize voting state
+            gameState.currentPlayerIndex = 0; // This now refers to the index in playerRevealOrder
+            gameState.selectedVote = null;
+            gameState.currentVotingPlayerIndex = 0;
+            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
+            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
+            // Initialize player scores if not already done for persistent tracking
+            if (gameState.playerScores.length === 0 || gameState.playerScores.length !== gameState.playerCount) {
+                gameState.playerScores = Array(gameState.playerCount).fill(null).map(() => ({ imposterCount: 0, imposterWins: 0 }));
+            }
+
+            // Show reveal screen
+            showScreen('revealScreen');
+            updateRevealScreen();
+        }
+
+        function updateRevealScreen() {
+            const actualPlayerIndex = gameState.playerRevealOrder[gameState.currentPlayerIndex];
+            // 1. Update currentPlayerName to display the custom player name based on shuffled order
+            document.getElementById('currentPlayerName').textContent = gameState.playerNames[actualPlayerIndex];
+            document.getElementById('progressText').textContent =
+                `Player ${gameState.currentPlayerIndex + 1} of ${gameState.playerCount}`;
+
+            const wordText = gameState.playerWords[actualPlayerIndex].word;
+            document.getElementById('wordText').textContent = wordText;
+            document.getElementById('wordDisplay').classList.add('word-hidden');
+            document.getElementById('revealBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function revealWord() {
+            playSound('revealWordSound', false, 0.4); // Specific calm sound for reveal
+            document.getElementById('wordDisplay').classList.remove('word-hidden');
+            document.getElementById('revealBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function nextPlayer() {
+            playSound('nextPlayerSound', false, 0.4); // Specific calm sound for next player
+            gameState.currentPlayerIndex++;
+
+            if (gameState.currentPlayerIndex >= gameState.playerCount) {
+                // All players have seen their words, start timer
+                startTimer();
+            } else {
+                updateRevealScreen();
+            }
+        }
+
+        function startTimer() {
+            showScreen('timerScreen');
+            let timeLeft = gameState.timerDuration;
+            stopSound('suspenseSound'); // Stop any lingering suspense sound
+            playSound('timerTickSound', true, 0.4); // Start ticking sound, loop, lower volume
+
+            updateTimerDisplay(timeLeft);
+
+            gameState.timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    stopSound('timerTickSound'); // Stop ticking sound
+                    showVoting();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = display;
+
+            // Change color based on time
+            timerEl.classList.remove('warning', 'danger');
+            if (seconds <= 10) {
+                timerEl.classList.add('danger');
+            } else if (seconds <= 30) {
+                timerEl.classList.add('warning');
+            }
+        }
+
+        function skipToVoting() {
+            playClickSound();
+            clearInterval(gameState.timerInterval);
+            stopSound('timerTickSound');
+            stopSound('suspenseSound');
+            showVoting();
+        }
+
+        function showVoting() {
+            stopSound('timerTickSound'); // Ensure timer sound is stopped
+            showScreen('votingScreen');
+            document.getElementById('submitVoteBtn').style.display = 'none'; // Hide submit button until a selection is made
+            document.getElementById('submitVoteBtn').textContent = 'Submit Vote';
+            document.getElementById('submitVoteBtn').disabled = false;
+
+            // 2. Update voting prompt to display the name of the current voting player
+            document.getElementById('votingPrompt').textContent = `${gameState.playerNames[gameState.currentVotingPlayerIndex]}, cast your vote!`
+
+            const votingGrid = document.getElementById('votingGrid');
+            votingGrid.innerHTML = '';
+
+            // Play suspense sound when voting starts, but not on subsequent player votes in the same voting round
+            if (gameState.currentVotingPlayerIndex === 0) {
+                playSound('suspenseSound', true, 0.4); // Loop suspense sound, lower volume
+            }
+
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.innerHTML = `
+                    <div class="player-name">${gameState.playerNames[i]}</div> <!-- 3. Display player's actual name -->
+                    <div class="vote-count">${gameState.tallyVotes[i]}</div>
+                `;
+
+                if (i === gameState.currentVotingPlayerIndex) {
+                    playerCard.classList.add('disabled-voter');
+                    playerCard.onclick = () => { /* Prevent self-voting */ };
+                } else {
+                    playerCard.onclick = () => selectPlayer(i, playerCard);
+                }
+                votingGrid.appendChild(playerCard);
+            }
+
+            // If the current voter already made a choice (e.g., during discussAgain() and re-vote), highlight it
+            const prevSelection = gameState.individualPlayerVotes[gameState.currentVotingPlayerIndex];
+            if (prevSelection !== null) {
+                const cards = document.querySelectorAll('.player-card');
+                cards[prevSelection].classList.add('selected');
+                gameState.selectedVote = prevSelection;
+                document.getElementById('submitVoteBtn').style.display = 'block';
+            }
+        }
+
+        function selectPlayer(index, cardElement) {
+            // Only allow selection if the card is not disabled (not the current voter)
+            if (cardElement.classList.contains('disabled-voter')) return;
+            playClickSound(); // Play click sound when selecting a player
+
+            // Remove previous selection for the *current* voter
+            document.querySelectorAll('.player-card').forEach(card => {
+                if (!card.classList.contains('disabled-voter')) { // Only clear selections on selectable cards
+                    card.classList.remove('selected');
+                }
+            });
+
+            // Select new player
+            cardElement.classList.add('selected');
+            gameState.selectedVote = index;
+            document.getElementById('submitVoteBtn').style.display = 'block';
+        }
+
+        function submitVote() {
+            if (gameState.selectedVote === null) return;
+            playClickSound(); // Click sound for submitting vote
+
+            // Record the current player's vote
+            gameState.individualPlayerVotes[gameState.currentVotingPlayerIndex] = gameState.selectedVote;
+
+            // Move to the next voting player
+            gameState.currentVotingPlayerIndex++;
+            gameState.selectedVote = null; // Reset selection for the next voter
+
+            if (gameState.currentVotingPlayerIndex >= gameState.playerCount) {
+                stopSound('suspenseSound'); // Stop suspense sound before showing results
+                // All players have voted, tally and show results
+                tallyAllVotes();
+                showResults();
+            } else {
+                // Next player to vote, re-render voting screen
+                showVoting();
+            }
+        }
+
+        function tallyAllVotes() {
+            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
+            gameState.individualPlayerVotes.forEach(votedForIndex => {
+                if (votedForIndex !== null) {
+                    gameState.tallyVotes[votedForIndex]++;
+                }
+            });
+        }
+
+        function showResults() {
+
+            // Ensure votes are tallied before processing results
+            tallyAllVotes();
+
+            // Find player with most votes
+            const maxVotes = Math.max(...gameState.tallyVotes);
+            const votedOutIndices = [];
+            for (let i = 0; i < gameState.tallyVotes.length; i++) {
+                if (gameState.tallyVotes[i] === maxVotes) {
+                    votedOutIndices.push(i);
+                }
+            }
+
+            const resultMessage = document.getElementById('resultMessage');
+            const imposterRevealSection = document.querySelector('.revealed-player');
+            const voteResultsContainer = document.getElementById('voteResultsContainer');
+            const scoreboardSection = document.getElementById('scoreboardSection');
+            const playAgainButtonsContainer = document.querySelector('div[style="display: flex; gap: 10px; margin-top: 30px;"]');
+
+            // Update imposterCount for the designated imposter
+            gameState.playerScores[gameState.imposterIndex].imposterCount++;
+
+            // Check for ties
+            if (votedOutIndices.length > 1) {
+                // If a tie, show the new tie announcement screen and hide elements related to detailed results
+                showScreen('tieAnnouncementScreen');
+                imposterRevealSection.style.display = 'none';
+                if (voteResultsContainer) voteResultsContainer.style.display = 'none';
+                if (scoreboardSection) scoreboardSection.style.display = 'none';
+
+            } else {
+                // No tie, proceed to display full results screen
+                showScreen('resultsScreen');
+                if (voteResultsContainer) voteResultsContainer.style.display = 'block';
+                if (scoreboardSection) scoreboardSection.style.display = 'block';
+                imposterRevealSection.style.display = 'block';
+
+                const votedOutIndex = votedOutIndices[0];
+                const caught = votedOutIndex === gameState.imposterIndex;
+
+                if (caught) {
+                    resultMessage.textContent = '✅ Mr. White was caught!';
+                    resultMessage.style.color = '#A8E063'; // Green for caught
+                    playSound('imposterCaughtSound', false, 0.4); // Play caught sound, lower volume
+                } else {
+                    resultMessage.textContent = '❌ Mr. White escaped!';
+                    resultMessage.style.color = '#F7DC6F'; // Yellow for escaped
+                    // If imposter escaped, increment imposterWins
+                    gameState.playerScores[gameState.imposterIndex].imposterWins++;
+                    playSound('imposterEscapedSound', false, 0.4); // Play escaped sound, lower volume
+                }
+
+                // Set up buttons for non-tie scenario
+                if (playAgainButtonsContainer) {
+                    const playAgainBtn = playAgainButtonsContainer.children[0];
+                    const newGameBtn = playAgainButtonsContainer.children[1];
+
+                    playAgainBtn.textContent = 'Play Again (Same Players)';
+                    playAgainBtn.onclick = () => playAgainSamePlayers();
+                    newGameBtn.style.display = 'block'; // Ensure 'New Game' button is visible
+                }
+
+                // Update imposterReveal to display the imposter's name
+                document.getElementById('imposterReveal').textContent = gameState.playerNames[gameState.imposterIndex];
+                document.getElementById('imposterWord').textContent = `Word: ${gameState.wordPair.imposter}`;
+                document.getElementById('normalWord').textContent = gameState.wordPair.normal;
+
+                // Show vote results
+                const voteResults = document.getElementById('voteResults');
+                voteResults.innerHTML = gameState.tallyVotes.map((votes, index) => `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span>${gameState.playerNames[index]} ${index === gameState.imposterIndex ? '(Mr. White)' : ''}</span> <!-- 5. Display player's actual name in vote results -->
+                        <span style="color: #56CCF2; font-weight: bold;">${votes} ${votes === 1 ? 'vote' : 'votes'}</span>
+                    </div>
+                `).join('');
+
+                // Update scoreboard
+                const scoreboardContainer = document.getElementById('scoreboardContainer');
+                scoreboardContainer.innerHTML = ''; // Clear previous scoreboard
+
+                scoreboardContainer.innerHTML += `
+                    <div class="scoreboard-item scoreboard-header">
+                        <span>Player</span>
+                        <span>Imposter Rounds</span>
+                        <span>Imposter Wins</span>
+                    </div>
+                `;
+
+                gameState.playerNames.forEach((name, index) => {
+                    const score = gameState.playerScores[index];
+                    scoreboardContainer.innerHTML += `
+                        <div class="scoreboard-item">
+                            <span>${name}</span>
+                            <span>${score.imposterCount}</span>
+                            <span>${score.imposterWins}</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function discussAgain() {
+            playClickSound(); // Click sound for discuss again button
+            // Reset only voting related state for a new discussion/voting round
+            gameState.currentVotingPlayerIndex = 0;
+            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null); // Clear previous votes
+            gameState.tallyVotes = Array(gameState.playerCount).fill(0); // Clear previous tallies
+            gameState.selectedVote = null;
+
+            stopSound('imposterCaughtSound'); // Ensure result sounds are stopped
+            stopSound('imposterEscapedSound');
+
+            // Restart the timer for a new discussion phase
+            startTimer();
+        }
+
+        function discussAgainFromTieScreen() {
+            // Call the existing discussAgain logic
+            discussAgain();
+        }
+
+        // Renamed from playAgain() to playAgainFullReset()
+        function playAgainFullReset() {
+            playClickSound(); // Click sound for new game button
+            stopSound('imposterCaughtSound');
+            stopSound('imposterEscapedSound');
+            // Full game reset
+            gameState.currentVotingPlayerIndex = 0;
+            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
+            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
+            gameState.selectedVote = null;
+            gameState.playerNames = []; // Clear player names for a completely new game
+            gameState.playerScores = []; // Clear scores for a completely new game
+            gameState.playerRevealOrder = []; // Clear reveal order for new game
+
+            showScreen('setupScreen');
+        }
+
+        // New function to play again with same players
+        function playAgainSamePlayers() {
+            playClickSound(); // Click sound for play again button
+            stopSound('imposterCaughtSound');
+            stopSound('imposterEscapedSound');
+            // Reset game-round specific state variables but preserve player names and scores
+            gameState.currentVotingPlayerIndex = 0;
+            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
+            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
+            gameState.selectedVote = null;
+            // Regenerate and shuffle player reveal order for the new round
+            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
+            shuffleArray(gameState.playerRevealOrder);
+
+            // Start a new game round with existing players and scores
+            startGame();
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
+</body>
+</html>''')
