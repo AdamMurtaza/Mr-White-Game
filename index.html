@@ -1,1429 +1,210 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1F2937">
-    <title>Mr. White - Find the Imposter</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #A8E063 0%, #56CCF2 100%); /* Updated: Green and Light Blue */
-            min-height: 100vh;
-            color: #1a202c; /* Updated for better contrast */
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .screen {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 {
-            font-size: 36px;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #1a202c; /* Updated for better visibility: Solid dark color */
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #2d3748; /* Updated: Darker grey for better visibility */
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #2d3748; /* Updated: Darker grey for better visibility */
-            font-weight: 500;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 15px;
-            background: rgba(168, 224, 99, 0.2); /* Updated: Lighter green */
-            border: 2px solid rgba(255, 255, 255,0.05);
-            border-radius: 12px;
-            color: #1a202c; /* Updated: Darker text for input fields */
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #F7DC6F; /* Updated: Yellow */
-        }
-
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #A8E063, #F7DC6F); /* Updated: Green and Yellow */
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            margin-top: 10px;
-        }
-
-        .word-reveal {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .player-number {
-            font-size: 48px;
-            font-weight: bold;
-            color: #1a202c; /* Updated for better visibility */
-            margin-bottom: 20px;
-        }
-
-        .word-display {
-            font-size: 42px;
-            font-weight: bold;
-            padding: 30px;
-            background: rgba(86, 204, 242, 0.2); /* Updated: Light blue background */
-            border-radius: 16px;
-            margin: 20px 0;
-            min-height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .word-hidden {
-            filter: blur(15px);
-            user-select: none;
-        }
-
-        .imposter-tag {
-            background: linear-gradient(135deg, #F7DC6F, #6B8E23); /* Updated: Yellow and darker green */
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 15px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .timer {
-            text-align: center;
-            font-size: 72px;
-            font-weight: bold;
-            color: #2D3748; /* Updated to a darker color for visibility */
-            margin: 40px 0;
-        }
-
-        .timer.warning {
-            color: #F7DC6F; /* Updated: Light yellow */
-            animation: pulse 1s infinite;
-        }
-
-        .timer.danger {
-            color: #EF4444;
-            animation: pulse 0.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .player-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .player-card {
-            background: #2C3E50; /* Dark blue background */
-            color: white; /* White text */
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .player-card:hover:not(.disabled-voter) {
-            background: #34495E; /* Slightly lighter blue on hover */
-            border-color: #56CCF2; /* Light blue border on hover */
-            transform: translateY(-3px);
-        }
-
-        .player-card.selected {
-            background: #F7DC6F; /* Yellow background for selected */
-            color: #1a202c; /* Dark text for selected */
-            border-color: #F7DC6F; /* Yellow border */
-        }
-
-        .player-card.disabled-voter {
-            opacity: 0.5;
-            cursor: not-allowed;
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .player-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: inherit; /* Inherit color from parent (.player-card) */
-        }
-
-        .vote-count {
-            font-size: 24px;
-            color: #A8E063; /* Updated: Green */
-            font-weight: bold;
-        }
-
-        .results {
-            text-align: center;
-        }
-
-        .result-message {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 30px 0;
-        }
-
-        .revealed-player {
-            background: rgba(239, 68, 68, 0.2);
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-        }
-
-        .revealed-player div[style*="font-size: 18px"] {
-            color: #2d3748; /* Updated for better visibility */
-        }
-
-        .progress-text {
-            text-align: center;
-            color: #2d3748; /* Updated for better visibility */
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        #votingPrompt {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #1a202c; /* Updated for better visibility */
-            margin-bottom: 20px;
-        }
-
-        .player-name-input {
-            margin-bottom: 15px;
-        }
-        .scoreboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            color: #1a202c; /* Updated for better visibility */
-        }
-        .scoreboard-header {
-            font-weight: bold;
-            color: #F7DC6F;
-        }
-        #voteResults > div > span:first-child {
-            color: #1a202c; /* Updated for better visibility */
-        }
-
-        /* Fixed Buttons Container */
-        .fixed-buttons-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column; /* Stack buttons vertically */
-            gap: 10px; /* Space between buttons */
-        }
-
-        .back-btn {
-            width: auto;
-            min-width: 120px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Green to Blue gradient */
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .settings-btn {
-            width: auto; /* Allow button to size naturally */
-            min-width: 120px; /* Give it a reasonable minimum width */
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #56CCF2, #A8E063); /* Blue to Green gradient */
-            color: white;
-            border: none;
-            border-radius: 25px; /* More rounded pill-shape */
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .settings-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        /* New styles for error display */
-        #errorDisplay {
-            display: none; /* Hidden by default */
-            position: fixed; /* Fixed position relative to viewport */
-            top: 0; /* At the top */
-            left: 0; /* From the left */
-            width: 100%; /* Full width */
-            background-color: rgba(239, 68, 68, 0.9); /* Red background with transparency */
-            color: white;
-            text-align: center;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            z-index: 10000; /* On top of everything */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            border-bottom: 3px solid #EF4444;
-            animation-duration: 0.3s;
-            animation-fill-mode: forwards; /* Keep the end state of the animation */
-        }
-
-        @keyframes flashRed {
-            0% { background-color: rgba(239, 68, 68, 0.9); }
-            50% { background-color: rgba(255, 100, 100, 0.9); }
-            100% { background-color: rgba(239, 68, 68, 0.9); }
-        }
-
-        .error-flash {
-            animation-name: flashRed;
-        }
-
-        /* Styles for Settings Modal */
-        #settingsModal {
-            display: none; /* Hidden by default */
-            position: fixed;
-            z-index: 10001; /* Above error message */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
-            backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-        }
-
-        #settingsModal.active {
-            display: flex; /* Only show when active */
-        }
-
-        #settingsModal .modal-content {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            color: white;
-        }
-
-        #settingsModal h2 {
-            font-size: 30px;
-            margin-bottom: 25px;
-            color: #F7DC6F;
-        }
-
-        #settingsModal label {
-            color: white;
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-
-        /* Retro Volume Slider Styling */
-        .volume-slider {
-            -webkit-appearance: none; /* Override default look */
-            appearance: none;
-            width: 80%; /* Full-width */
-            height: 10px;
-            background: #d3d3d3; /* Grey background */
-            outline: none; /* Remove outline */
-            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-            transition: opacity .2s;
-            border-radius: 50px; /* Make it more rounded/pill-like */
-            margin: 20px auto; /* Center the slider */
-            display: block;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .volume-slider:hover {
-            opacity: 1; /* Fully opaque on hover */
-        }
-
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; /* Override default look */
-            appearance: none;
-            width: 28px; /* Set a specific slider handle width */
-            height: 28px; /* Set a specific slider handle height */
-            border-radius: 50%; /* Round slider handle */
-            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Blue to Green gradient */
-            cursor: pointer; /* Cursor on hover */
-            border: 4px solid #1a202c; /* Dark border */
-            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .volume-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-        }
-
-        .volume-slider::-moz-range-thumb {
-            width: 28px; /* Set a specific slider handle width */
-            height: 28px; /* Set a specific slider handle height */
-            border-radius: 50%; /* Round slider handle */
-            background: linear-gradient(135deg, #A8E063, #56CCF2); /* Blue to Green gradient */
-            cursor: pointer; /* Cursor on hover */
-            border: 4px solid #1a202c; /* Dark border */
-            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .volume-slider::-moz-range-thumb:hover {
-            transform: scale(1.1);
-        }
-
-        /* Override generic button style for modal's back button */
-        #settingsModal .btn {
-            background: linear-gradient(135deg, #F7DC6F, #A8E063); /* Yellow to Green gradient */
-            color: #1a202c;
-            font-weight: 700;
-            margin-top: 30px;
-            width: 80%;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Error Display Element -->
-        <div id="errorDisplay" style="display: none;">Error message goes here!</div>
-
-        <!-- Setup Screen -->
-        <div id="setupScreen" class="screen active">
-            <div class="card">
-                <h1>🎭 Mr. White</h1>
-                <p class="subtitle">Find the imposter among you!</p>
-
-                <label for="playerCount">Number of Players</label>
-                <select id="playerCount">
-                    <option value="3">3 Players</option>
-                    <option value="4">4 Players</option>
-                    <option value="5" selected>5 Players</option>
-                    <option value="6">6 Players</option>
-                    <option value="7">7 Players</option>
-                    <option value="8">8 Players</option>
-                    <option value="9">9 Players</n>
-                    <option value="10">10 Players</option>
-                </select>
-
-                <label for="timerDuration">Discussion Time (seconds)</label>
-                <select id="timerDuration">
-                    <option value="30">30 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="90">1.5 minutes</n>
-                    <option value="120" selected>2 minutes</option>
-                    <option value="180">3 minutes</option>
-                    <option value="300">5 minutes</option>
-                </select>
-
-                <button class="btn" onclick="showPlayerNamingScreen()">Start Game</button>
-            </div>
-        </div>
-
-        <!-- Player Naming Screen -->
-        <div id="playerNamingScreen" class="screen">
-            <div class="card">
-                <h1>✏️ Name Your Players</h1>
-                <p class="subtitle">Enter a name for each player.</p>
-                <div id="playerNamesInputContainer"></div>
-                <button class="btn" onclick="proceedToGame()">Continue</button>
-            </div>
-        </div>
-
-        <!-- Word Reveal Screen -->
-        <div id="revealScreen" class="screen">
-            <div class="card">
-                <div class="word-reveal">
-                    <div class="player-number"><span id="currentPlayerName">Player 1</span></div>
-
-                    <div id="wordDisplay" class="word-display word-hidden">
-                        <span id="wordText">BANANA</span>
-                    </div>
-
-                    <button class="btn" id="revealBtn" onclick="revealWord()">Tap to See Your Word</button>
-                    <button class="btn btn-secondary" id="nextBtn" onclick="nextPlayer()" style="display: none;">Next Player</button>
-
-                    <div class="progress-text">
-                        <span id="progressText">Player 1 of 5</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Timer Screen -->
-        <div id="timerScreen" class="screen">
-            <div class="card">
-                <h1>⏱️ Discussion Time</h1>
-                <p class="subtitle">Discuss and find Mr. White!</p>
-
-                <div class="timer" id="timer">2:00</div>
-
-                <button class="btn btn-secondary" onclick="skipToVoting()">Skip to Voting</button>
-            </div>
-        </div>
-
-        <!-- Voting Screen -->
-        <div id="votingScreen" class="screen">
-            <div class="card">
-                <h1>🗳️ Vote for the Imposter</h1>
-                <p id="votingPrompt">Player X, cast your vote!</p>
-                <p class="subtitle" style="margin-top: 0;">Who do you think is Mr. White?</p>
-
-                <div class="player-grid" id="votingGrid"></div>
-
-                <button class="btn" id="submitVoteBtn" onclick="submitVote()" style="margin-top: 20px; display: none;">Submit Vote</button>
-            </div>
-        </div>
-
-        <!-- Results Screen -->
-        <div id="resultsScreen" class="screen">
-            <div class="card">
-                <div class="results">
-                    <h1>🎉 Game Over!</h1>
-
-                    <div class="result-message" id="resultMessage"></div>
-
-                    <div class="revealed-player">
-                        <div style="font-size: 18px; margin-bottom: 10px; color: #2d3748;">Mr. White was:</div>
-                        <div style="font-size: 32px; font-weight: bold;" id="imposterReveal">Player 3</div>
-                        <div style="margin-top: 10px; font-size: 20px; color: #56CCF2;" id="imposterWord">Word: APPLE</div>
-                    </div>
-
-                    <div style="margin-top: 20px;">
-                        <div style="font-size: 18px; margin-bottom: 10px; color: #2d3748;">Everyone else had:</div>
-                        <div style="font-size: 28px; font-weight: bold; color: #A8E063;" id="normalWord">BANANA</div>
-                    </div>
-
-                    <div id="voteResultsContainer" style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
-                        <div style="font-size: 16px; color: #2d3748; margin-bottom: 15px;">Final Votes:</div>
-                        <div id="voteResults"></div>
-                    </div>
-
-                    <div id="scoreboardSection" style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
-                        <div style="font-size: 20px; color: #F7DC6F; margin-bottom: 15px; font-weight: bold;">Scoreboard</div>
-                        <div id="scoreboardContainer"></div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button class="btn" onclick="playAgainSamePlayers()">Play Again (Same Players)</button>
-                        <button class="btn btn-secondary" onclick="playAgainFullReset()">
-                        New Game (Reset Players)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tie Announcement Screen -->
-        <div id="tieAnnouncementScreen" class="screen">
-            <div class="card">
-                <h1>It's a Tie!</h1>
-                <p class="subtitle">The votes are split. Discuss again to find Mr. White!</p>
-                <button class="btn" onclick="discussAgainFromTieScreen()">Start New Discussion</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Fixed Buttons Container -->
-    <div class="fixed-buttons-container">
-        <button class="btn back-btn" id="backButton" onclick="goBack()" style="display: none;">⬅️ Back</button>
-        <button class="btn settings-btn" onclick="openSettingsModal()">⚙️ Settings</button>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="screen">
-        <div class="modal-content card">
-            <h2>⚙️ Game Settings</h2>
-            <label for="volumeSlider">Volume</label>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1">
-            <button class="btn" onclick="closeSettingsModal()">Back</button>
-        </div>
-    </div>
-
-    <!-- Audio Elements -->
-    <audio id="clickSound" src="https://www.soundjay.com/buttons/button-1.mp3" preload="auto"></audio>
-    <audio id="revealWordSound" src="https://www.soundjay.com/buttons/button-2.mp3" preload="auto"></audio>
-    <audio id="nextPlayerSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
-    <audio id="timerTickSound" src="https://www.soundjay.com/misc/ticking-clock-3.mp3" preload="auto"></audio>
-    <audio id="votingStartSound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
-    <audio id="imposterCaughtSound" src="https://www.soundjay.com/applause/applause-2.mp3" preload="auto"></audio>
-    <audio id="imposterEscapedSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
-    <audio id="errorSound" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3" preload="auto"></audio>
-
-    <script>
-        let globalVolume = 1.0; // Global volume variable
-        let currentScreenId = 'setupScreen'; // Tracks the currently visible screen
-        let previousScreenId = 'setupScreen'; // Tracks the screen before current
-
-        function playSound(soundId, loop = false, volume = 1.0) {
-            const audio = document.getElementById(soundId);
-            if (audio) {
-                audio.loop = loop;
-                audio.volume = volume * globalVolume; // Apply global volume
-                console.log(`Playing sound: ${soundId}, Base Volume: ${volume}, Global Volume: ${globalVolume}, Final Audio Volume: ${audio.volume}`); // More detailed debugging
-                audio.play().catch(e => console.error("Error playing sound:", e));
-            }
-        }
-
-        function stopSound(soundId) {
-            const audio = document.getElementById(soundId);
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0; // Reset to start
-            }
-        }
-
-        function playClickSound() {
-            playSound('clickSound', false, 0.3); // Play click sound, no loop, reduced volume
-        }
-
-        // Game database - 100+ word pairs for maximum variety
-        const wordDatabase = [
-            // Food & Drinks
-            { normal: "APPLE", imposter: "ORANGE" },
-            { normal: "COFFEE", imposter: "TEA" },
-            { normal: "PIZZA", imposter: "BURGER" },
-            { normal: "CHOCOLATE", imposter: "VANILLA" },
-            { normal: "BREAD", imposter: "RICE" },
-            { normal: "CHICKEN", imposter: "BEEF" },
-            { normal: "JUICE", imposter: "SODA" },
-            { normal: "CAKE", imposter: "PIE" },
-            { normal: "PASTA", imposter: "NOODLES" },
-            { normal: "MILK", imposter: "YOGURT" },
-            { normal: "COOKIE", imposter: "BISCUIT" },
-            { normal: "SANDWICH", imposter: "WRAP" },
-            { normal: "SOUP", imposter: "STEW" },
-            { normal: "STEAK", imposter: "CHOP" },
-            { normal: "SALAD", imposter: "COLESLAW" },
-
-            // Animals
-            { normal: "DOG", imposter: "CAT" },
-            { normal: "LION", imposter: "TIGER" },
-            { normal: "ELEPHANT", imposter: "RHINO" },
-            { normal: "EAGLE", imposter: "HAWK" },
-            { normal: "SHARK", imposter: "WHALE" },
-            { normal: "SNAKE", imposter: "LIZARD" },
-            { normal: "HORSE", imposter: "ZEBRA" },
-            { normal: "WOLF", imposter: "FOX" },
-            { normal: "BEAR", imposter: "PANDA" },
-            { normal: "RABBIT", imposter: "HARE" },
-            { normal: "PENGUIN", imposter: "PUFFIN" },
-            { normal: "DOLPHIN", imposter: "SEAL" },
-            { normal: "BUTTERFLY", imposter: "MOTH" },
-            { normal: "CROW", imposter: "RAVEN" },
-            { normal: "FROG", imposter: "TOAD" },
-            { normal: "GIRAFFE", imposter: "CAMEL" },
-            { normal: "KOALA", imposter: "SLOTH" },
-            { normal: "KANGAROO", imposter: "WALLABY" },
-            { normal: "OCTOPUS", imposter: "SQUID" },
-            { normal: "PARROT", imposter: "MACAW" },
-
-            // Nature & Weather
-            { normal: "SUMMER", imposter: "WINTER" },
-            { normal: "MOUNTAIN", imposter: "OCEAN" },
-            { normal: "RAIN", imposter: "SNOW" },
-            { normal: "SUNRISE", imposter: "SUNSET" },
-            { normal: "STAR", imposter: "PLANET" },
-            { normal: "RIVER", imposter: "LAKE" },
-            { normal: "FOREST", imposter: "JUNGLE" },
-            { normal: "DESERT", imposter: "TUNDRA" },
-            { normal: "CLOUD", imposter: "FOG" },
-            { normal: "WIND", imposter: "BREEZE" },
-            { normal: "THUNDER", imposter: "LIGHTNING" },
-            { normal: "ISLAND", imposter: "PENINSULA" },
-            { normal: "VALLEY", imposter: "CANYON" },
-            { normal: "VOLCANO", imposter: "GEYSER" },
-            { normal: "AURORA", imposter: "RAINBOW" },
-            { normal: "GLACIER", imposter: "ICEBERG" },
-            { normal: "OASIS", imposter: "MIRAGE" },
-            { normal: "WATERFALL", imposter: "RAPIDS" },
-            { normal: "CAVE", imposter: "GROTTO" },
-
-            // Transportation
-            { normal: "CAR", imposter: "MOTORCYCLE" },
-            { normal: "AIRPLANE", imposter: "HELICOPTER" },
-            { normal: "TRAIN", imposter: "SUBWAY" },
-            { normal: "BOAT", imposter: "SHIP" },
-            { normal: "BICYCLE", imposter: "SCOOTER" },
-            { normal: "BUS", imposter: "VAN" },
-            { normal: "TRUCK", imposter: "PICKUP" },
-            { normal: "JET", imposter: "ROCKET" },
-            { normal: "YACHT", imposter: "SAILBOAT" },
-            { normal: "TAXI", imposter: "UBER" },
-            { normal: "HOT AIR BALLOON", imposter: "ZEPPELIN" },
-            { normal: "CANOE", imposter: "ROWBOAT" },
-            { normal: "CRUISE SHIP", imposter: "FERRY" },
-            { normal: "CABLE CAR", imposter: "GONDOLA" },
-            { normal: "RICKSHAW", imposter: "PEDICAB" },
-
-            // Sports & Games
-            { normal: "BASKETBALL", imposter: "FOOTBALL" },
-            { normal: "TENNIS", imposter: "BADMINTON" },
-            { normal: "SOCCER", imposter: "HOCKEY" },
-            { normal: "CHESS", imposter: "CHECKERS" },
-            { normal: "GOLF", imposter: "CRICKET" },
-            { normal: "BOXING", imposter: "WRESTLING" },
-            { normal: "RUNNING", imposter: "JOGGING" },
-            { normal: "SWIMMING", imposter: "DIVING" },
-            { normal: "SKIING", imposter: "SNOWBOARDING" },
-            { normal: "SURFING", imposter: "KAYAKING" },
-            { normal: "POKER", imposter: "BLACKJACK" },
-            { normal: "RUGBY", imposter: "AMERICAN FOOTBALL" },
-            { normal: "ARCHERY", imposter: "DARTS" },
-            { normal: "FENCING", imposter: "KENDO" },
-            { normal: "MARATHON", imposter: "TRIATHLON" },
-
-            // Music & Instruments
-            { normal: "GUITAR", imposter: "BASS" },
-            { normal: "PIANO", imposter: "KEYBOARD" },
-            { normal: "DRUM", imposter: "BONGO" },
-            { normal: "VIOLIN", imposter: "CELLO" },
-            { normal: "FLUTE", imposter: "CLARINET" },
-            { normal: "TRUMPET", imposter: "SAXOPHONE" },
-            { normal: "ROCK", imposter: "METAL" },
-            { normal: "JAZZ", imposter: "BLUES" },
-            { normal: "POP", imposter: "RAP" },
-            { normal: "OPERA", imposter: "BROADWAY" },
-            { normal: "HARP", imposter: "LYRE" },
-            { normal: "SYNTHESIZER", imposter: "ORGAN" },
-            { normal: "CONDUCTOR", imposter: "COMPOSER" },
-            { normal: "ALBUM", imposter: "PLAYLIST" },
-
-            // Technology
-            { normal: "PHONE", imposter: "TABLET" },
-            { normal: "LAPTOP", imposter: "DESKTOP" },
-            { normal: "MOUSE", imposter: "TRACKPAD" },
-            { normal: "MONITOR", imposter: "SCREEN" },
-            { normal: "KEYBOARD", imposter: "TYPEWRITER" },
-            { normal: "CAMERA", imposter: "CAMCORDER" },
-            { normal: "SPEAKER", imposter: "HEADPHONES" },
-            { normal: "ROUTER", imposter: "MODEM" },
-            { normal: "CHARGER", imposter: "BATTERY" },
-            { normal: "USB", imposter: "HDMI" },
-            { normal: "MICROPHONE", imposter: "VOICEOVER" },
-            { normal: "PRINTER", imposter: "SCANNER" },
-            { normal: "DATABASE", imposter: "SPREADSHEET" },
-            { normal: "ALGORITHM", imposter: "HEURISTIC" },
-
-            // Clothing
-            { normal: "SHIRT", imposter: "BLOUSE" },
-            { normal: "PANTS", imposter: "JEANS" },
-            { normal: "JACKET", imposter: "COAT" },
-            { normal: "SHOES", imposter: "BOOTS" },
-            { normal: "HAT", imposter: "CAP" },
-            { normal: "DRESS", imposter: "SKIRT" },
-            { normal: "SWEATER", imposter: "HOODIE" },
-            { normal: "SOCKS", imposter: "STOCKINGS" },
-            { normal: "GLOVES", imposter: "MITTENS" },
-            { normal: "SCARF", imposter: "SHAWL" },
-            { normal: "TIE", imposter: "BOW TIE" },
-            { normal: "VEST", imposter: "WAISTCOAT" },
-            { normal: "OVERALLS", imposter: "DUNGAREES" },
-            { normal: "PAJAMAS", imposter: "NIGHTGOWN" },
-            { normal: "RAINCOAT", imposter: "PONCHO" },
-
-            // Professions
-            { normal: "DOCTOR", imposter: "NURSE" },
-            { normal: "TEACHER", imposter: "PROFESSOR" },
-            { normal: "CHEF", imposter: "COOK" },
-            { normal: "PILOT", imposter: "CAPTAIN" },
-            { normal: "LAWYER", imposter: "JUDGE" },
-            { normal: "ARTIST", imposter: "PAINTER" },
-            { normal: "ENGINEER", imposter: "ARCHITECT" },
-            { normal: "WRITER", imposter: "AUTHOR" },
-            { normal: "ACTOR", imposter: "ACTRESS" },
-            { normal: "SINGER", imposter: "VOCALIST" },
-            { normal: "ELECTRICIAN", imposter: "PLUMBER" },
-            { normal: "SCIENTIST", imposter: "RESEARCHER" },
-            { normal: "JOURNALIST", imposter: "REPORTER" },
-            { normal: "VETERINARIAN", imposter: "ZOOLOGIST" },
-            { normal: "DENTIST", imposter: "ORTHODONTIST" },
-
-            // Objects & Items
-            { normal: "BOOK", imposter: "MAGAZINE" },
-            { normal: "PEN", imposter: "PENCIL" },
-            { normal: "CHAIR", imposter: "STOOL" },
-            { normal: "TABLE", imposter: "DESK" },
-            { normal: "CUP", imposter: "MUG" },
-            { normal: "PLATE", imposter: "BOWL" },
-            { normal: "KNIFE", imposter: "SWORD" },
-            { normal: "LAMP", imposter: "CANDLE" },
-            { normal: "PILLOW", imposter: "CUSHION" },
-            { normal: "BLANKET", imposter: "QUILT" },
-            { normal: "MIRROR", imposter: "WINDOW" },
-            { normal: "CLOCK", imposter: "WATCH" },
-            { normal: "WALLET", imposter: "PURSE" },
-            { normal: "BACKPACK", imposter: "SUITCASE" },
-            { normal: "UMBRELLA", imposter: "PARASOL" },
-            { normal: "FORK", imposter: "SPOON" },
-            { normal: "SCISSORS", imposter: "SHEARS" },
-            { normal: "HAMMER", imposter: "MALLET" },
-            { normal: "BRUSH", imposter: "COMB" },
-            { normal: "KEY", imposter: "LOCK" },
-
-            // Royalty & Mythology
-            { normal: "KING", imposter: "EMPEROR" },
-            { normal: "QUEEN", imposter: "PRINCESS" },
-            { normal: "KNIGHT", imposter: "WARRIOR" },
-            { normal: "WIZARD", imposter: "SORCERER" },
-            { normal: "DRAGON", imposter: "WYVERN" },
-            { normal: "FAIRY", imposter: "PIXIE" },
-            { normal: "VAMPIRE", imposter: "WEREWOLF" },
-            { normal: "GHOST", imposter: "SPIRIT" },
-            { normal: "ANGEL", imposter: "DEMON" },
-            { normal: "GIANT", imposter: "TITAN" },
-            { normal: "MERMAID", imposter: "SIREN" },
-            { normal: "CENTAUR", imposter: "SATYR" },
-            { normal: "UNICORN", imposter: "PEGASUS" },
-            { normal: "PHOENIX", imposter: "GRIFFIN" },
-            { normal: "MINOTAUR", imposter: "HARPY" },
-
-            // Everyday Items
-            { normal: "COUCH", imposter: "SOFA" },
-            { normal: "CARPET", imposter: "RUG" },
-            { normal: "VASE", imposter: "POT" },
-            { normal: "TOWEL", imposter: "CLOTH" },
-            { normal: "WINDOW", imposter: "PANE" },
-
-            // Abstract Concepts
-            { normal: "HAPPINESS", imposter: "JOY" },
-            { normal: "BRAVERY", imposter: "COURAGE" },
-            { normal: "WISDOM", imposter: "KNOWLEDGE" },
-            { normal: "FREEDOM", imposter: "LIBERTY" },
-            { normal: "PEACE", imposter: "CALM" }
-        ];
-
-        let gameState = {
-            playerCount: 5,
-            timerDuration: 120,
-            currentPlayerIndex: 0,
-            imposterIndex: 0,
-            wordPair: null,
-            playerWords: [],
-            timerInterval: null,
-            selectedVote: null,
-            currentVotingPlayerIndex: 0,
-            individualPlayerVotes: [],
-            tallyVotes: [],
-            playerNames: [], // Added: to store individual player names
-            playerScores: [], // Added: to track imposterCount and imposterWins for each player
-            playerRevealOrder: [], // Added: to store the shuffled order of players for word reveal
-            screenBeforeSettings: 'setupScreen' // New: to store the screen before settings was opened
-        };
-
-        function showPlayerNamingScreen() {
-            playClickSound();
-            gameState.playerCount = parseInt(document.getElementById('playerCount').value);
-            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
-            showScreen('playerNamingScreen');
-            generatePlayerNameInputs();
-            // document.querySelector('#playerNamingScreen .btn').disabled = true; // No longer needed, validation is now in proceedToGame()
-        }
-
-        function generatePlayerNameInputs() {
-            const container = document.getElementById('playerNamesInputContainer');
-            container.innerHTML = ''; // Clear previous inputs
-            for (let i = 0; i < gameState.playerCount; i++) {
-                const inputGroup = document.createElement('div');
-                inputGroup.className = 'player-name-input';
-                inputGroup.innerHTML = `
-                    <label for="player${i + 1}Name">Player ${i + 1} Name:</label>
-                    <input type="text" id="player${i + 1}Name" placeholder="Player ${i + 1}">
-                `;
-                // inputElement.addEventListener('input', checkAllNamesEntered); // No longer needed for disabling button
-                container.appendChild(inputGroup);
-            }
-            // checkAllNamesEntered(); // No longer needed
-        }
-
-        // The checkAllNamesEntered function has been removed as per the new validation approach.
-
-        function proceedToGame() {
-            playClickSound();
-            let currentNames = [];
-            let allNamesFilled = true; // Flag for validation
-
-            for (let i = 0; i < gameState.playerCount; i++) {
-                const inputElement = document.getElementById(`player${i + 1}Name`);
-                const playerName = inputElement.value.trim();
-                if (playerName === '') {
-                    allNamesFilled = false; // Mark as not all names filled
-                }
-                currentNames.push(playerName || `Player ${i + 1}`); // Collect all names, using default for empty ones for later uniqueness check
-            }
-
-            if (!allNamesFilled) {
-                showError('Please enter a name for all players!');
-                return; // Stop function execution if not all names are filled
-            }
-
-            // Check for duplicate names (case-insensitive and trimming whitespace)
-            const uniqueNames = new Set(currentNames.map(name => name.toLowerCase()));
-            if (uniqueNames.size !== currentNames.length) {
-                showError('All player names must be unique!');
-                return; // Stop game progression if duplicate names are found
-            }
-
-            gameState.playerNames = currentNames; // Store validated names
-
-            startGame();
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
-            }
-        }
-
-        function startGame() {
-            // Select random word pair
-            gameState.wordPair = wordDatabase[Math.floor(Math.random() * wordDatabase.length)];
-
-            // Randomly select imposter
-            gameState.imposterIndex = Math.floor(Math.random() * gameState.playerCount);
-
-            // Assign words to players
-            gameState.playerWords = [];
-            for (let i = 0; i < gameState.playerCount; i++) {
-                gameState.playerWords.push({
-                    word: i === gameState.imposterIndex ? gameState.wordPair.imposter : gameState.wordPair.normal,
-                    isImposter: i === gameState.imposterIndex
-                });
-            }
-
-            // Generate and shuffle player reveal order
-            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
-            shuffleArray(gameState.playerRevealOrder);
-
-            // Initialize voting state
-            gameState.currentPlayerIndex = 0; // This now refers to the index in playerRevealOrder
-            gameState.selectedVote = null;
-            gameState.currentVotingPlayerIndex = 0;
-            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
-            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
-            // Initialize player scores if not already done for persistent tracking
-            if (gameState.playerScores.length === 0 || gameState.playerScores.length !== gameState.playerCount) {
-                gameState.playerScores = Array(gameState.playerCount).fill(null).map(() => ({ imposterCount: 0, imposterWins: 0 }));
-            }
-
-            // Show reveal screen
-            showScreen('revealScreen');
-            updateRevealScreen();
-        }
-
-        function updateRevealScreen() {
-            const actualPlayerIndex = gameState.playerRevealOrder[gameState.currentPlayerIndex];
-            // 1. Update currentPlayerName to display the custom player name based on shuffled order
-            document.getElementById('currentPlayerName').textContent = gameState.playerNames[actualPlayerIndex];
-            document.getElementById('progressText').textContent =
-                `Player ${gameState.currentPlayerIndex + 1} of ${gameState.playerCount}`;
-
-            const wordText = gameState.playerWords[actualPlayerIndex].word;
-            document.getElementById('wordText').textContent = wordText;
-            document.getElementById('wordDisplay').classList.add('word-hidden');
-            document.getElementById('revealBtn').style.display = 'block';
-
-            const nextBtn = document.getElementById('nextBtn');
-            nextBtn.style.display = 'none';
-            nextBtn.disabled = false; // Ensure it's not disabled from a previous round if it was left disabled
-        }
-
-        function revealWord() {
-            playSound('revealWordSound', false, 0.4); // Specific calm sound for reveal
-
-            const revealWordAudio = document.getElementById('revealWordSound');
-            const nextBtn = document.getElementById('nextBtn');
-
-            // Disable next button immediately when sound starts playing
-            nextBtn.disabled = true;
-
-            // Enable next button when sound ends
-            const enableNextBtn = () => {
-                nextBtn.disabled = false;
-                revealWordAudio.removeEventListener('ended', enableNextBtn); // Remove listener to prevent multiple calls
-            };
-            revealWordAudio.addEventListener('ended', enableNextBtn);
-
-            document.getElementById('wordDisplay').classList.remove('word-hidden');
-            document.getElementById('revealBtn').style.display = 'none';
-            nextBtn.style.display = 'block';
-        }
-
-        function nextPlayer() {
-            playSound('nextPlayerSound', false, 0.4); // Specific calm sound for next player
-            gameState.currentPlayerIndex++;
-
-            if (gameState.currentPlayerIndex >= gameState.playerCount) {
-                // All players have seen their words, start timer
-                startTimer();
-            } else {
-                updateRevealScreen();
-            }
-        }
-
-        function startTimer() {
-            showScreen('timerScreen');
-            let timeLeft = gameState.timerDuration;
-            stopSound('votingStartSound'); // Stop voting sound if it was playing
-            playSound('timerTickSound', true, 0.4); // Start ticking sound, loop, lower volume
-
-            updateTimerDisplay(timeLeft);
-
-            gameState.timerInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay(timeLeft);
-
-                if (timeLeft <= 0) {
-                    clearInterval(gameState.timerInterval);
-                    stopSound('timerTickSound'); // Stop ticking sound
-                    showVoting();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
-
-            const timerEl = document.getElementById('timer');
-            timerEl.textContent = display;
-
-            // Change color based on time
-            timerEl.classList.remove('warning', 'danger');
-            if (seconds <= 10) {
-                timerEl.classList.add('danger');
-            } else if (seconds <= 30) {
-                timerEl.classList.add('warning');
-            }
-        }
-
-        function skipToVoting() {
-            playClickSound();
-            clearInterval(gameState.timerInterval);
-            stopSound('timerTickSound');
-            stopSound('votingStartSound'); // Stop voting sound
-            showVoting();
-        }
-
-        function showVoting() {
-            stopSound('timerTickSound'); // Ensure timer sound is stopped
-            showScreen('votingScreen');
-            document.getElementById('submitVoteBtn').style.display = 'none'; // Hide submit button until a selection is made
-            document.getElementById('submitVoteBtn').textContent = 'Submit Vote';
-            document.getElementById('submitVoteBtn').disabled = false;
-
-            document.getElementById('votingPrompt').textContent = `${gameState.playerNames[gameState.currentVotingPlayerIndex]}, cast your vote!`
-
-            const votingGrid = document.getElementById('votingGrid');
-            votingGrid.innerHTML = '';
-
-            // Play new voting start sound (not looping)
-            if (gameState.currentVotingPlayerIndex === 0) {
-                playSound('votingStartSound', false, 0.4); // Changed from suspenseSound, no loop
-            }
-
-            for (let i = 0; i < gameState.playerCount; i++) {
-                const playerCard = document.createElement('div');
-                playerCard.className = 'player-card';
-                playerCard.innerHTML = `
-                    <div class="player-name">${gameState.playerNames[i]}</div> <!-- 3. Display player's actual name -->
-                    <div class="vote-count">${gameState.tallyVotes[i]}</div>
-                `;
-
-                if (i === gameState.currentVotingPlayerIndex) {
-                    playerCard.classList.add('disabled-voter');
-                    playerCard.onclick = () => { /* Prevent self-voting */ };
-                } else {
-                    playerCard.onclick = () => selectPlayer(i, playerCard);
-                }
-                votingGrid.appendChild(playerCard);
-            }
-
-            // If the current voter already made a choice (e.g., during discussAgain() and re-vote), highlight it
-            const prevSelection = gameState.individualPlayerVotes[gameState.currentVotingPlayerIndex];
-            if (prevSelection !== null) {
-                const cards = document.querySelectorAll('.player-card');
-                cards[prevSelection].classList.add('selected');
-                gameState.selectedVote = prevSelection;
-                document.getElementById('submitVoteBtn').style.display = 'block';
-            }
-        }
-
-        function selectPlayer(index, cardElement) {
-            // Only allow selection if the card is not disabled (not the current voter)
-            if (cardElement.classList.contains('disabled-voter')) return;
-            playClickSound(); // Play click sound when selecting a player
-
-            // Remove previous selection for the *current* voter
-            document.querySelectorAll('.player-card').forEach(card => {
-                if (!card.classList.contains('disabled-voter')) { // Only clear selections on selectable cards
-                    card.classList.remove('selected');
-                }
-            });
-
-            // Select new player
-            cardElement.classList.add('selected');
-            gameState.selectedVote = index;
-            document.getElementById('submitVoteBtn').style.display = 'block';
-        }
-
-        function submitVote() {
-            if (gameState.selectedVote === null) {
-                showError('Please select a player to vote for!'); // Use the new error display
-                return; // Prevent submission if no player is selected
-            }
-            playClickSound(); // Click sound for submitting vote
-
-            // Record the current player's vote
-            gameState.individualPlayerVotes[gameState.currentVotingPlayerIndex] = gameState.selectedVote;
-
-            // Move to the next voting player
-            gameState.currentVotingPlayerIndex++;
-            gameState.selectedVote = null; // Reset selection for the next voter
-
-            if (gameState.currentVotingPlayerIndex >= gameState.playerCount) {
-                stopSound('votingStartSound'); // Stop voting sound before showing results
-                // All players have voted, tally and show results
-                tallyAllVotes();
-                showResults();
-            }
-            else {
-                // Next player to vote, re-render voting screen
-                showVoting();
-            }
-        }
-
-        function tallyAllVotes() {
-            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
-            gameState.individualPlayerVotes.forEach(votedForIndex => {
-                if (votedForIndex !== null) {
-                    gameState.tallyVotes[votedForIndex]++;
-                }
-            });
-        }
-
-        function showResults() {
-
-            // Ensure votes are tallied before processing results
-            tallyAllVotes();
-
-            // Find player with most votes
-            const maxVotes = Math.max(...gameState.tallyVotes);
-            const votedOutIndices = [];
-            for (let i = 0; i < gameState.tallyVotes.length; i++) {
-                if (gameState.tallyVotes[i] === maxVotes) {
-                    votedOutIndices.push(i);
-                }
-            }
-
-            const resultMessage = document.getElementById('resultMessage');
-            const imposterRevealSection = document.querySelector('.revealed-player');
-            const voteResultsContainer = document.getElementById('voteResultsContainer');
-            const scoreboardSection = document.getElementById('scoreboardSection');
-            const playAgainButtonsContainer = document.querySelector('div[style="display: flex; gap: 10px; margin-top: 30px;"]');
-
-            // Update imposterCount for the designated imposter
-            gameState.playerScores[gameState.imposterIndex].imposterCount++;
-
-            // Check for ties
-            if (votedOutIndices.length > 1) {
-                // If a tie, show the new tie announcement screen and hide elements related to detailed results
-                showScreen('tieAnnouncementScreen');
-                imposterRevealSection.style.display = 'none';
-                if (voteResultsContainer) voteResultsContainer.style.display = 'none';
-                if (scoreboardSection) scoreboardSection.style.display = 'none';
-
-            } else {
-                // No tie, proceed to display full results screen
-                showScreen('resultsScreen');
-                if (voteResultsContainer) voteResultsContainer.style.display = 'block';
-                if (scoreboardSection) scoreboardSection.style.display = 'block';
-                imposterRevealSection.style.display = 'block';
-
-                const votedOutIndex = votedOutIndices[0];
-                const caught = votedOutIndex === gameState.imposterIndex;
-
-                if (caught) {
-                    resultMessage.textContent = '✅ Mr. White was caught!';
-                    resultMessage.style.color = '#A8E063'; // Green for caught
-                    playSound('imposterCaughtSound', false, 0.4); // Play caught sound, lower volume
-                } else {
-                    resultMessage.textContent = '❌ Mr. White escaped!';
-                    resultMessage.style.color = '#F7DC6F'; // Yellow for escaped
-                    // If imposter escaped, increment imposterWins
-                    gameState.playerScores[gameState.imposterIndex].imposterWins++;
-                    playSound('imposterEscapedSound', false, 0.4); // Play escaped sound, lower volume
-                }
-
-                // Set up buttons for non-tie scenario
-                if (playAgainButtonsContainer) {
-                    const playAgainBtn = playAgainButtonsContainer.children[0];
-                    const newGameBtn = playAgainButtonsContainer.children[1];
-
-                    playAgainBtn.textContent = 'Play Again (Same Players)';
-                    playAgainBtn.onclick = () => playAgainSamePlayers();
-                    newGameBtn.style.display = 'block'; // Ensure 'New Game' button is visible
-                }
-
-                // Update imposterReveal to display the imposter's name
-                document.getElementById('imposterReveal').textContent = gameState.playerNames[gameState.imposterIndex];
-                document.getElementById('imposterWord').textContent = `Word: ${gameState.wordPair.imposter}`;
-                document.getElementById('normalWord').textContent = gameState.wordPair.normal;
-
-                // Show vote results
-                const voteResults = document.getElementById('voteResults');
-                voteResults.innerHTML = gameState.tallyVotes.map((votes, index) => `
-                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span>${gameState.playerNames[index]} ${index === gameState.imposterIndex ? '(Mr. White)' : ''}</span> <!-- 5. Display player's actual name in vote results -->
-                        <span style="color: #56CCF2; font-weight: bold;">${votes} ${votes === 1 ? 'vote' : 'votes'}</span>
-                    </div>
-                `).join('');
-
-                // Update scoreboard
-                const scoreboardContainer = document.getElementById('scoreboardContainer');
-                scoreboardContainer.innerHTML = ''; // Clear previous scoreboard
-
-                scoreboardContainer.innerHTML += `
-                    <div class="scoreboard-item scoreboard-header">
-                        <span>Player</span>
-                        <span>Imposter Rounds</span>
-                        <span>Imposter Wins</span>
-                    </div>
-                `;
-
-                gameState.playerNames.forEach((name, index) => {
-                    const score = gameState.playerScores[index];
-                    scoreboardContainer.innerHTML += `
-                        <div class="scoreboard-item">
-                            <span>${name}</span>
-                            <span>${score.imposterCount}</span>
-                            <span>${score.imposterWins}</span>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        function discussAgain() {
-            playClickSound(); // Click sound for discuss again button
-            // Reset only voting related state for a new discussion/voting round
-            gameState.currentVotingPlayerIndex = 0;
-            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null); // Clear previous votes
-            gameState.tallyVotes = Array(gameState.playerCount).fill(0); // Clear previous tallies
-            gameState.selectedVote = null;
-
-            stopSound('imposterCaughtSound'); // Ensure result sounds are stopped
-            stopSound('imposterEscapedSound');
-            stopSound('votingStartSound'); // Ensure voting start sound is stopped
-
-            // Restart the timer for a new discussion phase
-            startTimer();
-        }
-
-        function discussAgainFromTieScreen() {
-            // Call the existing discussAgain logic
-            discussAgain();
-        }
-
-        // Renamed from playAgain() to playAgainFullReset()
-        function playAgainFullReset() {
-            playClickSound(); // Click sound for new game button
-            stopSound('imposterCaughtSound');
-            stopSound('imposterEscapedSound');
-            stopSound('votingStartSound'); // Ensure voting start sound is stopped
-            // Full game reset
-            gameState.currentVotingPlayerIndex = 0;
-            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
-            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
-            gameState.selectedVote = null;
-            gameState.playerNames = []; // Clear player names for a completely new game
-            gameState.playerScores = []; // Clear scores for a completely new game
-            gameState.playerRevealOrder = []; // Clear reveal order for new game
-
-            showScreen('setupScreen');
-        }
-
-        // New function to play again with same players
-        function playAgainSamePlayers() {
-            playClickSound(); // Click sound for play again button
-            stopSound('imposterCaughtSound');
-            stopSound('imposterEscapedSound');
-            stopSound('votingStartSound'); // Ensure voting start sound is stopped
-            // Reset game-round specific state variables but preserve player names and scores
-            gameState.currentVotingPlayerIndex = 0;
-            gameState.individualPlayerVotes = Array(gameState.playerCount).fill(null);
-            gameState.tallyVotes = Array(gameState.playerCount).fill(0);
-            gameState.selectedVote = null;
-            // Regenerate and shuffle player reveal order for the new round
-            gameState.playerRevealOrder = Array.from({length: gameState.playerCount}, (_, i) => i);
-            shuffleArray(gameState.playerRevealOrder);
-
-            // Start a new game round with existing players and scores
-            startGame();
-        }
-
-        // Function to open settings modal
-        function openSettingsModal() {
-            playClickSound();
-            gameState.screenBeforeSettings = currentScreenId; // Store the current screen before opening settings
-            document.getElementById('volumeSlider').value = globalVolume; // Set slider to current global volume
-            showScreen('settingsModal');
-        }
-
-        // Function to close settings modal
-        function closeSettingsModal() {
-            playClickSound();
-            showScreen(gameState.screenBeforeSettings); // Go back to the screen stored before settings was opened
-        }
-
-        function goBack() {
-            playClickSound();
-            showScreen(previousScreenId);
-        }
-
-        function showScreen(screenId) {
-            if (currentScreenId !== screenId) { // Only update if the screen is actually changing
-                // Only save previousScreenId if the current screen is not the settings modal.
-                // This ensures previousScreenId tracks main game screen transitions correctly.
-                if (currentScreenId !== 'settingsModal') {
-                    previousScreenId = currentScreenId;
-                }
-                currentScreenId = screenId;
-            }
-
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            document.getElementById(screenId).classList.add('active');
-
-            // Control visibility of back button
-            const backButton = document.getElementById('backButton');
-            if (backButton) {
-                // Hide back button during specific game phases
-                if (screenId === 'revealScreen' || screenId === 'timerScreen' || screenId === 'votingScreen' || screenId === 'resultsScreen' || screenId === 'tieAnnouncementScreen' || screenId === 'setupScreen') {
-                    backButton.style.display = 'none';
-                } else {
-                    backButton.style.display = 'block';
-                }
-            }
-        }
-
-        // New functions for error display
-        let errorTimeout;
-        function showError(message) {
-            const errorDiv = document.getElementById('errorDisplay');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            errorDiv.classList.add('error-flash'); // Add class for animation
-            playSound('errorSound', false, 0.6); // Play error sound
-
-            // Clear any existing timeout to prevent multiple errors from conflicting
-            clearTimeout(errorTimeout);
-            errorTimeout = setTimeout(() => {
-                hideError();
-            }, 4000); // Hide after 4 seconds
-        }
-
-        function hideError() {
-            const errorDiv = document.getElementById('errorDisplay');
-            errorDiv.style.display = 'none';
-            errorDiv.classList.remove('error-flash'); // Remove class to reset animation
-            stopSound('errorSound'); // Stop error sound if it's still playing
-        }
-
-        // Event listener for the volume slider to update globalVolume
-        document.addEventListener('DOMContentLoaded', () => {
-            const volumeSlider = document.getElementById('volumeSlider');
-            if (volumeSlider) {
-                volumeSlider.addEventListener('input', (event) => {
-                    globalVolume = parseFloat(event.target.value);
-                    // Play a quick click sound at the new volume for feedback
-                    playSound('clickSound', false, 0.1);
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mr. White</title>
+<style>
+:root,[data-theme=aurora]{--bg1:#7c3aed;--bg2:#06b6d4;--bg3:#10b981;--card:#fffffff2;--text:#1e1b4b;--muted:#585878;--line:#0000001f;--in:#f1eeff}
+[data-theme=sunset]{--bg1:#f97316;--bg2:#ec4899;--bg3:#8b5cf6}
+[data-theme=ocean]{--bg1:#0ea5e9;--bg2:#6366f1;--bg3:#14b8a6}
+[data-theme=forest]{--bg1:#16a34a;--bg2:#0d9488;--bg3:#ca8a04}
+[data-theme=candy]{--bg1:#f472b6;--bg2:#a78bfa;--bg3:#38bdf8}
+[data-theme=midnight]{--bg1:#0f172a;--bg2:#312e81;--bg3:#581c87;--card:#1e293bf2;--text:#f1f5f9;--muted:#a5b4fc;--line:#ffffff2e;--in:#0f172a}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg1:#0f172a;--bg2:#312e81;--bg3:#581c87;--card:#1e293bf2;--text:#f1f5f9;--muted:#a5b4fc;--line:#ffffff2e;--in:#0f172a}}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg1)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:linear-gradient(120deg,var(--bg1),var(--bg2),var(--bg3),var(--bg1));background-size:300% 300%;background-attachment:fixed;animation:bg 18s ease infinite}
+body.calm,body.rm{animation:none}
+body.rm *{animation:none!important;transition:none!important}
+body.hc{--muted:var(--text);--line:#000b}
+@keyframes bg{50%{background-position:100% 50%}}
+@keyframes in{from{opacity:0;transform:translateY(10px)}}
+@keyframes pulse{50%{transform:scale(1.06)}}
+body[data-ph=home]{--acc:#7c3aed;--acc2:#ec4899}
+body[data-ph=reveal]{--acc:#0284c7;--acc2:#06b6d4}
+body[data-ph=clue]{--acc:#d97706;--acc2:#f97316}
+body[data-ph=discuss]{--acc:#059669;--acc2:#65a30d}
+body[data-ph=vote]{--acc:#dc2626;--acc2:#e11d48}
+body[data-ph=result]{--acc:#7c3aed;--acc2:#0891b2}
+.wrap{max-width:560px;margin:0 auto;padding:14px}
+.bar{display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:800;margin-bottom:10px;letter-spacing:.04em}
+.bar button{background:#ffffff33;color:#fff;border:0;border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;display:flex;gap:6px;align-items:center;cursor:pointer}
+.card{background:var(--card);color:var(--text);border-radius:22px;padding:22px;box-shadow:0 12px 40px #0004;animation:in .3s}
+h1{margin:0 0 6px;font-size:1.9rem;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h3{margin:22px 0 4px;color:var(--acc);text-transform:uppercase;font-size:.8rem;letter-spacing:.1em}
+.m{color:var(--muted);margin:4px 0}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;margin-top:12px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2));cursor:pointer;box-shadow:0 4px 14px #0003}
+.btn.alt{background:var(--in);color:var(--text);box-shadow:none;border:2px solid var(--line)}
+.btn:disabled{opacity:.45}
+input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--in);color:var(--text)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+input[type=range]{padding:0;accent-color:var(--acc)}
+input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--acc)}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0 4px}
+.av{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800}
+.av.big{width:84px;height:84px;font-size:2.2rem;margin:14px auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px}
+.pc{display:flex;flex-direction:column;align-items:center;gap:8px;border:3px solid transparent;border-radius:16px;padding:14px 8px;background:var(--in);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+.pc.sel{border-color:var(--acc);transform:scale(1.04);box-shadow:0 6px 18px #0003}
+.word{font-size:2.3rem;font-weight:900;text-align:center;padding:30px 10px;border-radius:18px;margin:16px 0;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;transition:filter .2s;word-break:break-word;user-select:none}
+.word.hide{filter:blur(18px)}
+.clock{font-size:4.2rem;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;color:var(--acc);margin:10px 0}
+.clock.low{color:#ef4444;animation:pulse 1s infinite}
+.chip{display:inline-block;padding:8px 14px;margin:4px 4px 0 0;border-radius:99px;font:inherit;font-size:.9rem;font-weight:600;border:2px solid var(--line);background:var(--in);color:var(--text);cursor:pointer}
+.chip.on{background:var(--acc);color:#fff;border-color:transparent}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;color:#fff;font-size:.8rem;font-weight:700}
+.t-civ{background:#0284c7}.t-und{background:#d97706}.t-wht{background:#7c3aed}
+.sc{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#111;color:#fff;padding:12px 18px;border-radius:12px;z-index:9;max-width:90%;text-align:center}
+.center{text-align:center}
+</style></head>
+<body data-ph="home"><div class="wrap"><div class="bar"><span>MR. WHITE</span><button id="gear"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Settings</button></div><div id="app"></div></div>
+<script>
+"use strict";
+const WORDS={
+Food:"apple,orange,mango,peach,pear,lemon,cherry,grape,plum;pizza,burger,taco,sushi,kebab,curry,sandwich,wrap,noodles,pasta;coffee,tea,juice,soda,milk,smoothie,lemonade,cocoa;cake,pie,cookie,donut,brownie,pudding,muffin,waffle,pancake;bread,rice,potato,couscous,oats,quinoa,cereal,toast;chicken,beef,mutton,fish,turkey,lamb,duck,prawn",
+Animals:"dog,cat,rabbit,hamster,wolf,fox,jackal,coyote;lion,tiger,leopard,cheetah,jaguar,panther,lynx;eagle,hawk,falcon,owl,vulture,crow,raven;shark,whale,dolphin,seal,orca,otter,walrus;snake,lizard,crocodile,gecko,turtle,frog,toad;butterfly,moth,bee,wasp,beetle,dragonfly,ant;horse,donkey,zebra,mule,camel,llama;cow,buffalo,goat,sheep,deer,bison",
+Nature:"summer,winter,spring,autumn,monsoon;rain,snow,hail,fog,mist,drizzle,storm;river,lake,pond,stream,sea,ocean,canal;mountain,hill,valley,canyon,cliff,plateau;rose,tulip,lily,daisy,sunflower,orchid,jasmine;oak,pine,palm,maple,cedar,bamboo",
+Transport:"car,taxi,truck,van,bus,jeep,limousine;airplane,helicopter,jet,rocket,glider,drone;boat,ship,yacht,canoe,ferry,submarine;train,metro,tram,monorail,cable car;bicycle,scooter,motorcycle,skateboard,rickshaw",
+Sports:"football,basketball,volleyball,handball,rugby,baseball;tennis,badminton,squash,pingpong,padel;boxing,wrestling,judo,karate,fencing,archery;swimming,diving,surfing,rowing,kayaking,sailing;running,sprinting,hurdles,marathon,javelin,discus;cricket,hockey,golf,polo,lacrosse",
+Music:"guitar,bass,banjo,ukulele,violin,cello,harp;flute,clarinet,trumpet,saxophone,trombone,oboe;drum,bongo,tambourine,xylophone,cymbal;rock,metal,jazz,blues,pop,rap,country,reggae;singer,composer,conductor,pianist,drummer,rapper",
+Tech:"phone,tablet,laptop,desktop,smartwatch,console;mouse,trackpad,keyboard,monitor,webcam,headset;router,modem,server,cable,antenna;printer,scanner,projector,camera,camcorder;email,chat,video call,voicemail,podcast",
+Clothing:"shirt,blouse,sweater,hoodie,vest,jacket,coat;pants,jeans,shorts,leggings,skirt,dress;shoes,boots,sandals,sneakers,slippers,heels;hat,cap,beanie,helmet,turban,scarf;watch,bracelet,necklace,ring,earrings,belt",
+Jobs:"doctor,nurse,surgeon,dentist,pharmacist,paramedic;teacher,professor,tutor,principal,librarian;lawyer,judge,police,detective,soldier,guard;painter,sculptor,singer,actor,dancer,writer,poet;plumber,electrician,carpenter,mechanic,welder,tailor;chef,baker,waiter,farmer,fisherman,butcher",
+Home:"sofa,chair,stool,bench,bed,table,desk;spoon,fork,knife,ladle,whisk,spatula;lamp,candle,torch,lantern,chandelier;pillow,blanket,quilt,curtain,carpet,rug;hammer,screwdriver,wrench,drill,saw,pliers;soap,shampoo,towel,toothbrush,razor,comb",
+Fantasy:"dragon,unicorn,griffin,phoenix,pegasus,hydra;wizard,witch,sorcerer,druid,alchemist;vampire,werewolf,zombie,ghost,mummy,skeleton;king,queen,prince,emperor,knight,baron;elf,dwarf,goblin,troll,ogre,giant;sword,shield,spear,axe,bow,dagger",
+Places:"hospital,clinic,school,college,library,museum;bank,market,mall,pharmacy,bakery,cinema;paris,london,rome,madrid,berlin,vienna,athens;tokyo,seoul,beijing,delhi,karachi,dubai,bangkok;airport,station,harbor,bridge,tunnel,highway;beach,island,desert,jungle,forest,cave",
+School:"pen,pencil,marker,crayon,eraser,ruler;math,physics,chemistry,biology,history,geography;notebook,textbook,diary,journal,magazine,novel;exam,quiz,homework,project,lecture,assignment;classroom,laboratory,cafeteria,playground,hallway",
+Body:"eye,ear,nose,mouth,tongue,cheek;arm,elbow,wrist,hand,finger,thumb;leg,knee,ankle,foot,toe,heel;heart,lung,liver,kidney,stomach,brain;skin,hair,nail,bone,muscle,vein",
+Feelings:"happy,joyful,cheerful,excited,proud;sad,lonely,gloomy,heartbroken,tired;angry,furious,annoyed,jealous,bitter;brave,bold,fearless,heroic;kind,gentle,polite,generous,humble;fear,panic,worry,anxiety,dread",
+Games:"chess,checkers,ludo,monopoly,scrabble,carrom;poker,blackjack,rummy,bridge,solitaire;puzzle,riddle,maze,quiz,crossword;lego,doll,kite,marbles,yoyo,balloon;racing,shooter,platformer,sandbox,strategy,adventure",
+Space:"sun,moon,star,comet,asteroid,meteor;mercury,venus,earth,mars,jupiter,saturn,neptune;galaxy,nebula,blackhole,universe,orbit;astronaut,satellite,telescope,spaceship,rover,shuttle",
+Kitchen:"salt,pepper,cumin,turmeric,cinnamon,paprika;basil,mint,parsley,thyme,coriander,oregano;ketchup,mayo,mustard,vinegar,chutney,salsa;oven,stove,microwave,toaster,grill,blender;cup,mug,glass,bottle,jug,flask;plate,bowl,tray,pan,pot,kettle",
+Money:"cash,coin,cheque,card,wallet,purse;bank,vault,locker,safe,treasury;salary,bonus,pension,tax,loan,debt;gold,silver,diamond,pearl,ruby,emerald;shop,store,stall,booth,kiosk,warehouse",
+Media:"movie,drama,series,cartoon,documentary,sitcom;novel,comic,poem,biography,story,fable;painting,sketch,poster,mural,portrait,sculpture;radio,television,newspaper,magazine,website;comedy,horror,thriller,romance,mystery,fantasy",
+Colors:"red,crimson,scarlet,maroon,pink;blue,navy,cyan,teal,indigo;green,lime,olive,emerald,mint;yellow,gold,amber,orange,mustard;circle,square,triangle,oval,diamond,star"
+};
+const CATS=Object.entries(WORDS).map(([c,s])=>[c,s.split(";").map(g=>g.split(","))]);
+const DEF={master:.8,sfx:.8,music:.35,mute:false,disc:120,clue:20,under:1,white:1,guess:true,showRole:true,hold:true,vib:true,wake:true,theme:"auto",size:16,rm:false,hc:false,anim:true,cats:null,custom:"",names:["","","","",""],scores:{}};
+const $=s=>document.querySelector(s),rnd=n=>Math.floor(Math.random()*n);
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+let set;try{set=Object.assign({},DEF,JSON.parse(lsGet("mw_set")||"{}"))}catch(e){set={...DEF}}
+const save=()=>lsSet("mw_set",JSON.stringify(set));
+function h(t,a={},...k){const e=document.createElement(t);for(const[x,v]of Object.entries(a)){if(x==="class")e.className=v;else if(x.startsWith("on"))e.addEventListener(x.slice(2),v);else if(x==="style")e.style.cssText=v;else e.setAttribute(x,v)}for(const c of k.flat())if(c!=null)e.append(c);return e}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const col=i=>`hsl(${(i*47+12)%360} 72% 48%)`;
+const av=(i,t,big)=>h("div",{class:"av"+(big?" big":""),style:"background:"+col(i)},t);
+const RN={civ:"Civilian",und:"Undercover",wht:"Mr. White"};
+const tag=r=>h("span",{class:"tag t-"+r},RN[r]);
+const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+function toast(m){const t=h("div",{class:"toast"},m);document.body.append(t);setTimeout(()=>t.remove(),2600)}
+const vib=ms=>{if(set.vib&&navigator.vibrate)navigator.vibrate(ms)};
+
+/* ---------- audio (Web Audio, all gains live) ---------- */
+let AC,mG,sG,uG,mi;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mG=AC.createGain();sG=AC.createGain();uG=AC.createGain();sG.connect(mG);uG.connect(mG);mG.connect(AC.destination);applyVol()}if(AC.state==="suspended")AC.resume();return AC}
+function applyVol(){if(!AC)return;const t=AC.currentTime;mG.gain.setTargetAtTime(set.mute?0:set.master,t,.02);sG.gain.setTargetAtTime(set.sfx,t,.02);uG.gain.setTargetAtTime(set.music,t,.02)}
+function tone(f,d,type,dest,delay,v){try{const c=ac(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime+(delay||0);o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(dest==="m"?uG:sG);o.start(t);o.stop(t+d+.05)}catch(e){}}
+const sfx={click:()=>tone(660,.07,"square","s",0,.12),reveal:()=>{tone(523,.15,"sine","s",0,.3);tone(784,.25,"sine","s",.1,.3)},good:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,"triangle","s",i*.12,.3)),bad:()=>[330,262,196].forEach((f,i)=>tone(f,.3,"sawtooth","s",i*.15,.2)),tick:()=>tone(880,.05,"square","s",0,.1)};
+function music(on){clearInterval(mi);if(on){let i=0;const sc=[262,330,392,523,392,330];mi=setInterval(()=>tone(sc[i++%6],.5,"triangle","m",0,.2),420)}}
+document.addEventListener("click",e=>{if(e.target.closest("button")){sfx.click();vib(10)}});
+
+/* ---------- timer ---------- */
+const tm={left:0,on:false,last:0,cb:null,ls:0};
+function tmSet(s,cb){tm.left=s;tm.cb=cb;tm.on=s>0;tm.last=Date.now();tm.ls=0}
+function upd(){const e=$("#clk");if(e){e.textContent=fmt(Math.ceil(tm.left));e.classList.toggle("low",tm.left<=10&&tm.on)}}
+setInterval(()=>{if(!tm.on)return;const n=Date.now();tm.left-=(n-tm.last)/1000;tm.last=n;if(tm.left<=0){tm.left=0;tm.on=false;upd();tm.cb&&tm.cb();return}const s=Math.ceil(tm.left);if(s<=10&&s!==tm.ls){tm.ls=s;sfx.tick()}upd()},250);
+
+/* ---------- display ---------- */
+function applyDisplay(){document.documentElement.style.fontSize=set.size+"px";if(set.theme==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.dataset.theme=set.theme;document.body.classList.toggle("rm",set.rm||matchMedia("(prefers-reduced-motion:reduce)").matches);document.body.classList.toggle("hc",set.hc);document.body.classList.toggle("calm",!set.anim)}
+function wake(){if(set.wake&&navigator.wakeLock)navigator.wakeLock.request("screen").catch(()=>{})}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&G)wake()});
+
+/* ---------- words ---------- */
+function customPairs(){return set.custom.split("\n").map(l=>l.split(/[,|]/).map(x=>x.trim().toUpperCase())).filter(p=>p.length>=2&&p[0]&&p[1])}
+function pairCount(){const on=CATS.filter(([c])=>!set.cats||set.cats.includes(c));return on.reduce((s,[,gs])=>s+gs.reduce((a,g)=>a+g.length*(g.length-1)/2,0),0)+customPairs().length}
+function pickPair(){let used;try{used=JSON.parse(lsGet("mw_used")||"[]")}catch(e){used=[]}
+const us=new Set(used),on=CATS.filter(([c])=>!set.cats||set.cats.includes(c)),cu=customPairs(),pool=(on.length?on:CATS).flatMap(([,g])=>g);let p,k;
+for(let i=0;i<120;i++){if(cu.length&&Math.random()<cu.length/(cu.length+40))p=cu[rnd(cu.length)].slice(0,2);else{const g=pool[rnd(pool.length)],a=rnd(g.length);let b=rnd(g.length-1);if(b>=a)b++;p=[g[a],g[b]].map(w=>w.toUpperCase())}k=[...p].sort().join("|");if(!us.has(k))break}
+used.push(k);lsSet("mw_used",JSON.stringify(used.slice(-3000)));return p}
+
+/* ---------- game ---------- */
+let G=null,scr="home",back="home",wasOn=false,sel=null;
+function go(s){scr=s;render()}
+function start(){const names=set.names.map((n,i)=>n.trim()||"Player "+(i+1));
+if(names.length<3)return toast("At least 3 players are needed");
+if(new Set(names.map(n=>n.toLowerCase())).size<names.length)return toast("Player names must be unique");
+const n=names.length,mx=Math.floor((n-1)/2);let w=Math.min(set.white,mx),u=Math.min(set.under,mx-w);if(!w&&!u)u=1;
+const pair=pickPair(),roles=shuffle([...Array(u).fill("und"),...Array(w).fill("wht"),...Array(n-u-w).fill("civ")]);
+G={P:names.map((nm,i)=>({name:nm,color:col(i),idx:i,role:roles[i],alive:true,word:roles[i]==="civ"?pair[0]:roles[i]==="und"?pair[1]:null})),civ:pair[0],und:pair[1],round:1,i:0,tied:null};
+wake();go("cover")}
+function startClues(){const al=G.P.filter(p=>p.alive);G.order=shuffle([...al]);if(G.order[0].role==="wht"&&al.length>1){const j=1+rnd(al.length-1);[G.order[0],G.order[j]]=[G.order[j],G.order[0]]}G.ci=0;music(true);beginClue();go("clue")}
+function beginClue(){tmSet(set.clue,nextClue)}
+function nextClue(){G.ci++;if(G.ci>=G.order.length){tmSet(set.disc,toVote);go("discuss")}else{beginClue();sfx.reveal();go("clue")}}
+function toVote(){music(false);tm.on=false;G.vi=0;G.voters=G.P.filter(p=>p.alive);G.tally={};G.tied=null;go("vote")}
+function resolve(){const al=G.P.filter(p=>p.alive),c=G.tally,mx=Math.max(...al.map(p=>c[p.name]||0)),tops=al.filter(p=>(c[p.name]||0)===mx);
+if(tops.length>1&&!G.tied){G.tied=tops;G.tally={};G.vi=0;toast("Tie. Re-vote between "+tops.map(p=>p.name).join(", "));return go("vote")}
+const out=tops[rnd(tops.length)];out.alive=false;G.out=out;G.tied=null;out.role==="civ"?sfx.bad():sfx.good();vib([80,40,80]);go("out")}
+function after(){const al=G.P.filter(p=>p.alive),imp=al.filter(p=>p.role!=="civ").length,civ=al.length-imp;if(!imp)end("civ");else if(imp>=civ)end("imp");else{G.round++;startClues()}}
+function end(side){G.win=side;music(false);G.P.forEach(p=>{const s=set.scores[p.name]||(set.scores[p.name]={g:0,w:0});s.g++;if((side==="civ")===(p.role==="civ"))s.w++});save();side==="civ"?sfx.good():sfx.bad();vib(200);go("end")}
+
+/* ---------- screens ---------- */
+const PH={home:"home",settings:"home",cover:"reveal",word:"reveal",clue:"clue",discuss:"discuss",vote:"vote",out:"vote",guess:"vote",end:"result"};
+function render(){const app=$("#app");app.replaceChildren();document.body.dataset.ph=PH[scr];$("#gear").style.display=scr==="settings"?"none":"";app.append(SC[scr]());upd()}
+const SC={
+home(){const c=h("div",{class:"card"},h("h1",{},"Mr. White"),h("p",{class:"m"},"Pass-and-play word deduction. Add 3 to 20 players, then find the imposters."));
+set.names.forEach((n,i)=>{const inp=h("input",{placeholder:"Player "+(i+1),maxlength:16});inp.value=n;inp.oninput=()=>{set.names[i]=inp.value;save()};
+c.append(h("div",{class:"row"},av(i,i+1),inp,set.names.length>3?h("button",{class:"chip",onclick:()=>{set.names.splice(i,1);save();render()}},"Remove"):null))});
+if(set.names.length<20)c.append(h("button",{class:"btn alt",onclick:()=>{set.names.push("");save();render()}},"Add player"));
+c.append(h("button",{class:"btn",onclick:start},"Start game"),h("p",{class:"m center"},pairCount().toLocaleString()+" word pairs available. Used pairs are skipped until all are played."));
+const sc=Object.entries(set.scores).sort((a,b)=>b[1].w-a[1].w).slice(0,8);
+if(sc.length){c.append(h("h3",{},"Scoreboard"));sc.forEach(([n,s])=>c.append(h("div",{class:"sc"},h("span",{},n),h("b",{},s.w+" wins / "+s.g+" games"))))}return c},
+cover(){const p=G.P[G.i];return h("div",{class:"card center"},h("h1",{},"Pass the device"),h("p",{class:"m"},"Player "+(G.i+1)+" of "+G.P.length),av(p.idx,p.name[0].toUpperCase(),1),h("h2",{style:"margin:0"},p.name),h("p",{class:"m"},"Make sure nobody else can see the screen."),h("button",{class:"btn",onclick:()=>go("word")},"I am "+p.name))},
+word(){const p=G.P[G.i],w=h("div",{class:"word hide"},p.word||"You are Mr. White");const show=()=>w.classList.remove("hide"),hide=()=>w.classList.add("hide");
+const b=h("button",{class:"btn alt",style:"touch-action:none;user-select:none"},set.hold?"Hold to reveal":"Tap to show or hide");
+if(set.hold){b.onpointerdown=()=>{show();sfx.reveal()};["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,hide));b.oncontextmenu=e=>e.preventDefault()}else b.onclick=()=>{w.classList.contains("hide")?(show(),sfx.reveal()):hide()};
+return h("div",{class:"card center"},h("h1",{},p.name),h("p",{class:"m"},p.word?"Remember your word. Give clues without saying it.":"You have no word. Listen to the clues and blend in."),w,b,h("button",{class:"btn",onclick:()=>{G.i++;G.i>=G.P.length?startClues():go("cover")}},"Done, hide and pass"))},
+clue(){const p=G.order[G.ci];return h("div",{class:"card center"},h("h1",{},"Clue round "+G.round),h("p",{class:"m"},"Speaker "+(G.ci+1)+" of "+G.order.length),av(p.idx,p.name[0].toUpperCase(),1),h("h2",{style:"margin:0"},p.name),h("p",{class:"m"},"Give one word or short phrase about your word."),set.clue>0?h("div",{class:"clock",id:"clk"}):null,h("button",{class:"btn",onclick:nextClue},G.ci+1>=G.order.length?"Start discussion":"Next speaker"))},
+discuss(){const c=h("div",{class:"card center"},h("h1",{},"Discussion"),h("p",{class:"m"},"Who is hiding something? Argue it out."),h("div",{class:"clock",id:"clk"}));
+const pb=h("button",{class:"btn alt",onclick:()=>{tm.on=!tm.on;tm.last=Date.now();pb.textContent=tm.on?"Pause timer":"Resume timer"}},tm.on?"Pause timer":"Resume timer");
+c.append(pb,h("button",{class:"btn",onclick:toVote},"Go to voting"));const r=h("div",{class:"row",style:"justify-content:center;flex-wrap:wrap"});G.P.filter(p=>p.alive).forEach(p=>r.append(av(p.idx,p.name[0].toUpperCase())));c.append(r);return c},
+vote(){const v=G.voters[G.vi];sel=null;const cand=(G.tied||G.voters).filter(p=>p!==v),c=h("div",{class:"card center"},h("h1",{},v.name+", vote"),h("p",{class:"m"},"Voter "+(G.vi+1)+" of "+G.voters.length+(G.tied?". Tie-break round.":". Pick who you suspect.")));
+const g=h("div",{class:"grid"}),ok=h("button",{class:"btn",disabled:"true",onclick:()=>{G.tally[sel.name]=(G.tally[sel.name]||0)+1;G.vi++;G.vi>=G.voters.length?resolve():go("vote")}},"Confirm vote");
+cand.forEach(p=>{const b=h("button",{class:"pc"},av(p.idx,p.name[0].toUpperCase()),p.name);b.onclick=()=>{sel=p;g.querySelectorAll(".pc").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");ok.removeAttribute("disabled")};g.append(b)});c.append(g,ok);return c},
+out(){const p=G.out;return h("div",{class:"card center"},h("h1",{},"Eliminated"),av(p.idx,p.name[0].toUpperCase(),1),h("h2",{style:"margin:0"},p.name),set.showRole?h("p",{},"They were ",tag(p.role)):h("p",{class:"m"},"Their role stays hidden."),h("button",{class:"btn",onclick:()=>p.role==="wht"&&set.guess?go("guess"):after()},"Continue"))},
+guess(){const i=h("input",{placeholder:"Type the civilian word",autocomplete:"off"}),n=s=>s.trim().toLowerCase();return h("div",{class:"card center"},h("h1",{},"Last chance"),h("p",{class:"m"},G.out.name+", you were Mr. White. Guess the civilians’ word to steal the win."),h("div",{style:"margin-top:14px"},i),h("button",{class:"btn",onclick:()=>{if(n(i.value)===n(G.civ))end("wht");else{toast("Wrong guess");sfx.bad();after()}}},"Submit guess"),h("button",{class:"btn alt",onclick:after},"Skip"))},
+end(){const t={civ:"Civilians win",imp:"Imposters win",wht:"Mr. White guessed it"}[G.win],c=h("div",{class:"card"},h("h1",{class:"center"},t),h("p",{class:"m center"},"Civilian word: "+G.civ+(G.P.some(p=>p.role==="und")?"  |  Undercover word: "+G.und:"")));
+G.P.forEach(p=>c.append(h("div",{class:"sc"},h("span",{class:"row",style:"margin:0"},av(p.idx,p.name[0].toUpperCase()),p.name+(p.alive?"":" (out)")),tag(p.role))));
+c.append(h("button",{class:"btn",onclick:start},"Play again, same players"),h("button",{class:"btn alt",onclick:()=>{music(false);G=null;go("home")}},"Back to setup"));return c},
+settings(){const c=h("div",{class:"card"},h("h1",{},"Settings"));
+const sec=t=>c.append(h("h3",{},t));
+const sl=(l,k,mn,mx,st,f,live)=>{const v=h("b",{},f(set[k])),i=h("input",{type:"range",min:mn,max:mx,step:st});i.value=set[k];i.oninput=()=>{set[k]=+i.value;v.textContent=f(set[k]);save();live&&live()};c.append(h("div",{class:"setrow"},h("span",{},l),v),i);return i};
+const tg=(l,k,fn)=>{const i=h("input",{type:"checkbox"});i.checked=!!set[k];i.onchange=()=>{set[k]=i.checked;save();fn&&fn()};c.append(h("div",{class:"setrow"},h("span",{},l),i))};
+const pc=v=>Math.round(v*100)+"%",sec_=v=>v+"s";
+sec("Audio");
+const s1=sl("Master volume","master",0,1,.05,pc,applyVol),s2=sl("Effects volume","sfx",0,1,.05,pc,applyVol),s3=sl("Music volume","music",0,1,.05,pc,applyVol);
+[s1,s2].forEach(s=>s.onchange=()=>sfx.good());
+tg("Mute everything","mute",applyVol);
+c.append(h("button",{class:"btn alt",onclick:()=>{sfx.good();tone(392,.6,"triangle","m",0,.3)}},"Test sounds"));
+sec("Gameplay");
+sl("Discussion time","disc",30,600,15,v=>fmt(v));sl("Clue time per player","clue",0,60,5,v=>v?v+"s":"Off");
+sl("Undercovers","under",0,4,1,v=>v);sl("Mr. Whites","white",0,3,1,v=>v);
+tg("Mr. White gets a last guess","guess");tg("Reveal role when eliminated","showRole");tg("Hold to reveal word (anti-peek)","hold");
+sec("Word packs");const cnt=h("p",{class:"m"}),box=h("div"),fns=[];
+const upc=()=>{cnt.textContent=pairCount().toLocaleString()+" word pairs in selected packs"};
+CATS.forEach(([n])=>{const b=h("button",{class:"chip"},n),up=()=>b.classList.toggle("on",!set.cats||set.cats.includes(n));up();fns.push(up);b.onclick=()=>{let cur=set.cats||CATS.map(x=>x[0]);cur=cur.includes(n)?cur.filter(x=>x!==n):[...cur,n];set.cats=cur.length===CATS.length?null:cur;save();fns.forEach(f=>f());upc()};box.append(b)});
+const ta=h("textarea",{rows:"4",placeholder:"One pair per line, e.g. tea, coffee"});ta.value=set.custom;ta.oninput=()=>{set.custom=ta.value;save();upc()};upc();
+c.append(cnt,box,h("div",{class:"setrow"},h("span",{},"Custom pairs (civilian word, undercover word)")),ta);
+sec("Display");
+const th=h("select",{});[["auto","Automatic"],["aurora","Aurora"],["sunset","Sunset"],["ocean","Ocean"],["forest","Forest"],["candy","Candy"],["midnight","Midnight"]].forEach(([v,l])=>{const o=h("option",{value:v},l);if(set.theme===v)o.selected=true;th.append(o)});th.onchange=()=>{set.theme=th.value;save();applyDisplay()};
+c.append(h("div",{class:"setrow"},h("span",{},"Theme")),th);
+sl("Text size","size",14,22,1,v=>v+"px",applyDisplay);tg("Animated background","anim",applyDisplay);tg("Reduce motion","rm",applyDisplay);tg("High contrast","hc",applyDisplay);
+sec("Device");tg("Vibration","vib");tg("Keep screen awake during games","wake");
+sec("Data");
+c.append(h("button",{class:"btn alt",onclick:()=>{set.scores={};save();toast("Scoreboard cleared")}},"Clear scoreboard"),h("button",{class:"btn alt",onclick:()=>{lsSet("mw_used","[]");toast("Word history cleared")}},"Clear used-word history"),h("button",{class:"btn alt",onclick:()=>{if(confirm("Reset all settings, names and scores?")){set={...DEF,names:["","","","",""],scores:{}};save();applyDisplay();back==="home"||(back="home");close();}}},"Reset everything"),
+h("button",{class:"btn",onclick:close},"Back"));return c}};
+function close(){scr=back;if(wasOn){tm.on=true;tm.last=Date.now()}render()}
+$("#gear").onclick=()=>{back=scr;wasOn=tm.on;tm.on=false;go("settings")};
+applyDisplay();render();
+</script></body></html>
